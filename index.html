@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>中国大宗商品全产业链图谱</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:#f5f7fa;color:#333333;
+  font-family:'PingFang SC','Microsoft YaHei',sans-serif;}
+
+/* ── 顶栏 ── */
+#bar{position:fixed;top:0;left:0;right:0;z-index:500;
+  background:rgba(255,255,255,0.98);border-bottom:1px solid rgba(0,0,0,0.08);box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+#bar-r1{display:flex;align-items:center;padding:0 12px;height:36px;gap:8px;}
+#bar-r1 h1{font-size:15px;font-weight:700;color:#2cb980;letter-spacing:.1em;white-space:nowrap;flex-shrink:0;}
+#sbox{display:flex;align-items:center;gap:5px;margin-left:auto;flex-shrink:0;}
+#si{background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.15);color:#333333;
+  padding:5px 12px;font-size:14px;border-radius:4px;outline:none;width:140px;}
+#si::placeholder{color:#999999;}
+#rb{padding:5px 12px;font-size:13px;border-radius:4px;border:1px solid rgba(0,0,0,.15);
+  background:transparent;color:#666666;cursor:pointer;}
+#rb:hover{color:#333333;}
+/* 口诀按钮 */
+#mnemo-btn{padding:5px 14px;font-size:13px;border-radius:4px;
+  border:1px solid rgba(44,185,128,.35);background:rgba(44,185,128,.08);
+  color:#2cb980;cursor:pointer;flex-shrink:0;transition:all .15s;}
+#mnemo-btn:hover,#mnemo-btn.on{background:rgba(44,185,128,.18);border-color:rgba(44,185,128,.7);color:#1a9b66;}
+
+#bar-r2{display:flex;align-items:center;padding:0 12px;height:36px;gap:5px;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;
+  scrollbar-color:rgba(0,0,0,.15) transparent;}
+#bar-r2::-webkit-scrollbar{height:3px;}
+#bar-r2::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);}
+.tab{padding:5px 14px;font-size:13px;border-radius:4px;border:1px solid transparent;
+  background:transparent;color:#666666;cursor:pointer;white-space:nowrap;
+  transition:color .15s,border-color .15s;flex-shrink:0;}
+.tab:hover{color:#333333;}
+.tab.on{color:#2cb980;border-color:currentColor;}
+
+/* ── 画布 ── */
+#cw{position:fixed;top:72px;left:0;right:0;bottom:0;overflow:hidden;cursor:grab;}
+#cw:active{cursor:grabbing;}
+svg{display:block;}
+
+/* ── 节点详情面板 ── */
+#panel{position:fixed;right:10px;top:80px;width:300px;max-height:calc(100vh - 95px);
+  overflow-y:auto;background:rgba(255,255,255,0.98);border:1px solid rgba(0,0,0,.1);
+  border-radius:8px;padding:12px;z-index:600;display:none;box-shadow:0 4px 20px rgba(0,0,0,0.1);
+  scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent;}
+#panel .xb{float:right;font-size:13px;color:#999999;cursor:pointer;padding-left:6px;}
+#panel .xb:hover{color:#666666;}
+#panel h3{font-size:17px;color:#333333;margin-bottom:8px;clear:both;line-height:1.3;}
+.cbg{display:inline-block;padding:3px 10px;border-radius:4px;font-size:13px;font-weight:700;margin-bottom:8px;}
+.fbg{display:inline-block;margin-left:6px;padding:3px 9px;border-radius:4px;font-size:13px;
+  background:rgba(240,200,60,.1);border:1px solid rgba(240,200,60,.3);color:#f0c840;}
+.pd{font-size:14px;color:#666666;line-height:1.7;margin-bottom:10px;}
+.mb{background:rgba(44,185,128,.06);border-left:2px solid rgba(44,185,128,.4);
+  border-radius:0 4px 4px 0;padding:10px 12px;margin-bottom:10px;}
+.mbt{font-size:12px;color:#2cb980;letter-spacing:.07em;margin-bottom:5px;}
+.mbx{font-size:14px;color:#558866;line-height:1.8;white-space:pre-line;}
+.dv{height:1px;background:rgba(0,0,0,.08);margin:7px 0;}
+.rt{font-size:13px;color:#888888;letter-spacing:.08em;margin:10px 0 6px;}
+.ri{font-size:15px;color:#666666;padding:5px 0;display:flex;align-items:flex-start;
+  gap:8px;cursor:pointer;border-bottom:1px solid rgba(0,0,0,.05);}
+.ri:hover{color:#2cb980;}
+.ri .rn{flex:1;line-height:1.4;}.ri .rl{font-size:12px;color:#999999;flex-shrink:0;margin-top:2px;}
+
+/* ══════════════════════════════════════
+   口诀速查面板
+══════════════════════════════════════ */
+#mnemo-panel{
+  position:fixed;top:72px;left:0;right:0;bottom:0;z-index:700;
+  background:rgba(245,247,250,0.98);backdrop-filter:blur(16px);
+  display:none;flex-direction:column;
+}
+#mnemo-panel.open{display:flex;}
+#mp-header{
+  display:flex;align-items:center;gap:10px;padding:14px 20px 10px;
+  border-bottom:1px solid rgba(0,0,0,.08);flex-shrink:0;
+}
+#mp-header h2{font-size:18px;color:#2cb980;font-weight:700;letter-spacing:.06em;}
+#mp-header .sub{font-size:14px;color:#888888;margin-left:6px;}
+#mp-close{margin-left:auto;padding:6px 14px;font-size:13px;border-radius:4px;
+  border:1px solid rgba(0,0,0,.15);background:transparent;color:#666666;cursor:pointer;}
+#mp-close:hover{color:#333333;}
+#mp-filter{display:flex;gap:6px;padding:8px 20px;border-bottom:1px solid rgba(0,0,0,.06);
+  flex-wrap:wrap;flex-shrink:0;}
+.mf-btn{padding:6px 14px;font-size:14px;border-radius:4px;border:1px solid transparent;
+  background:transparent;color:#666666;cursor:pointer;transition:all .15s;}
+.mf-btn:hover{color:#333333;}
+.mf-btn.on{color:#2cb980;border-color:currentColor;}
+#mp-body{flex:1;overflow-y:auto;padding:16px 20px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:12px;align-content:start;
+  scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent;}
+.mc{background:rgba(255,255,255,0.95);border-radius:8px;padding:13px 14px;
+  border-left:3px solid;transition:border-color .15s,background .15s;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+.mc:hover{background:rgba(255,255,255,1);box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+.mc-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.mc-name{font-size:15px;font-weight:700;color:#333333;}
+.mc-chain{font-size:12px;padding:2px 8px;border-radius:4px;font-weight:600;}
+.mc-fu{font-size:12px;color:#d4a820;margin-left:4px;}
+.mc-text{font-size:13px;color:#555555;line-height:1.85;white-space:pre-line;}
+.mc-tip{font-size:12px;color:#888888;margin-top:8px;font-style:italic;}
+
+/* ── 图例 ── */
+#leg{position:fixed;left:10px;bottom:10px;z-index:400;
+  background:rgba(255,255,255,0.98);border:1px solid rgba(0,0,0,.08);
+  border-radius:10px;padding:12px 16px;min-width:200px;box-shadow:0 2px 10px rgba(0,0,0,0.08);}
+.lt{font-size:13px;color:#666666;letter-spacing:.07em;margin-bottom:8px;font-weight:700;}
+.lh{font-size:12px;color:#888888;font-weight:600;margin:8px 0 4px;}
+.lr{display:flex;align-items:center;gap:8px;font-size:13px;color:#555555;margin:4px 0;line-height:1.5;}
+.lv{font-size:12px;color:#999999;margin-left:3px;}
+</style>
+</head>
+<body>
+
+<div id="bar">
+  <div id="bar-r1">
+    <h1>⬡ 中国大宗商品全产业链图谱 v16</h1>
+    <div id="sbox">
+      <button id="mnemo-btn" onclick="toggleMnemo()">📌 口诀速查</button>
+      <input id="si" placeholder="搜索品种…" oninput="doSearch(this.value)">
+      <button id="rb" onclick="resetAll()">重置</button>
+    </div>
+  </div>
+  <div id="bar-r2">
+    <button class="tab on"  data-c="all"        onclick="setChain('all',this)">全部（14条链）</button>
+    <button class="tab"     data-c="crude_sys"  onclick="setChain('crude_sys',this)">🛢 原油系</button>
+    <button class="tab"     data-c="polyolefin" onclick="setChain('polyolefin',this)">🔵 聚烯烃链</button>
+    <button class="tab"     data-c="aromatic"   onclick="setChain('aromatic',this)">🌸 芳烃链</button>
+    <button class="tab"     data-c="polyester"  onclick="setChain('polyester',this)">🟢 聚酯链</button>
+    <button class="tab"     data-c="chlor"      onclick="setChain('chlor',this)">🟡 盐化工与建材</button>
+    <button class="tab"     data-c="coal"       onclick="setChain('coal',this)">⚫ 煤化工链</button>
+    <button class="tab"     data-c="newenergy"  onclick="setChain('newenergy',this)">💎 新能源链</button>
+    <button class="tab"     data-c="rubber"     onclick="setChain('rubber',this)">🟠 橡胶链</button>
+    <button class="tab"     data-c="paper"      onclick="setChain('paper',this)">🟩 纸浆链</button>
+    <button class="tab"     data-c="fertilizer" onclick="setChain('fertilizer',this)">🌾 化肥链</button>
+    <button class="tab"     data-c="phospho"    onclick="setChain('phospho',this)">🔶 磷化工链</button>
+    <button class="tab"     data-c="agri"       onclick="setChain('agri',this)">🌽 农产品链</button>
+    <button class="tab"     data-c="ferrous"    onclick="setChain('ferrous',this)">🪨 黑色建材链</button>
+    <button class="tab"     data-c="metal"      onclick="setChain('metal',this)">⚙️ 有色金属、贵金属链</button>
+  </div>
+</div>
+
+<!-- 口诀速查面板 -->
+<div id="mnemo-panel">
+  <div id="mp-header">
+    <h2>📌 口诀速查</h2>
+    <span class="sub">—— 点击卡片跳转到图谱中的对应品种</span>
+    <button id="mp-close" onclick="toggleMnemo()">✕ 关闭</button>
+  </div>
+  <div id="mp-filter">
+    <button class="mf-btn on" data-f="all" onclick="filterMnemo('all',this)">全部品种</button>
+    <button class="mf-btn" data-f="crude_sys" onclick="filterMnemo('crude_sys',this)">🛢 原油系</button>
+    <button class="mf-btn" data-f="polyolefin" onclick="filterMnemo('polyolefin',this)">🔵 聚烯烃</button>
+    <button class="mf-btn" data-f="aromatic" onclick="filterMnemo('aromatic',this)">🌸 芳烃</button>
+    <button class="mf-btn" data-f="polyester" onclick="filterMnemo('polyester',this)">🟢 聚酯</button>
+    <button class="mf-btn" data-f="chlor" onclick="filterMnemo('chlor',this)">🟡 盐化工建材</button>
+    <button class="mf-btn" data-f="coal" onclick="filterMnemo('coal',this)">⚫ 煤化工</button>
+    <button class="mf-btn" data-f="newenergy" onclick="filterMnemo('newenergy',this)">💎 新能源</button>
+    <button class="mf-btn" data-f="rubber" onclick="filterMnemo('rubber',this)">🟠 橡胶</button>
+    <button class="mf-btn" data-f="paper" onclick="filterMnemo('paper',this)">🟩 纸浆</button>
+    <button class="mf-btn" data-f="fertilizer" onclick="filterMnemo('fertilizer',this)">🌾 化肥</button>
+    <button class="mf-btn" data-f="phospho" onclick="filterMnemo('phospho',this)">🔶 磷化工</button>
+    <button class="mf-btn" data-f="agri" onclick="filterMnemo('agri',this)">🌽 农产品</button>
+    <button class="mf-btn" data-f="ferrous" onclick="filterMnemo('ferrous',this)">🪨 黑色建材</button>
+    <button class="mf-btn" data-f="metal" onclick="filterMnemo('metal',this)">⚙️ 有色金属</button>
+  </div>
+  <div id="mp-body"></div>
+</div>
+
+<div id="cw">
+  <svg id="sv" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+        <path d="M1.5 2.5L8 5L1.5 7.5" fill="none" stroke="#6a8aaa" stroke-width="1.8" stroke-linecap="round"/>
+      </marker>
+      <marker id="arhi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M1.5 2.5L8 5L1.5 7.5" fill="none" stroke="#2cb980" stroke-width="1.8" stroke-linecap="round"/>
+      </marker>
+    </defs>
+    <g id="BGL"></g><g id="EL"></g><g id="NL"></g>
+  </svg>
+</div>
+
+<div id="panel">
+  <span class="xb" onclick="closePanel()">✕</span>
+  <h3 id="pn"></h3>
+  <div><span class="cbg" id="pb"></span><span class="fbg" id="pf" style="display:none">★ 期货品种</span></div>
+  <div class="pd" id="pd"></div>
+  <div class="mb" id="pm" style="display:none">
+    <div class="mbt">📌 价格传导口诀</div>
+    <div class="mbx" id="pmt"></div>
+  </div>
+  <div class="dv"></div>
+  <div class="rt">⬆ 上游来源</div><div id="pu"></div>
+  <div class="rt" style="margin-top:6px">⬇ 下游产品</div><div id="pdn"></div>
+</div>
+
+<div id="leg">
+  <div class="lt" onclick="toggleLeg()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;margin-bottom:0;">
+    <span>图例</span><span id="leg-arrow" style="font-size:12px;color:#888888;margin-left:10px;transition:transform .2s;">▲</span>
+  </div>
+  <div id="leg-body" style="overflow:hidden;transition:max-height .25s ease;max-height:300px;margin-top:6px;">
+  <div class="lh">节点类型</div>
+  <div class="lr"><span style="display:inline-block;width:30px;height:16px;border:2px solid #f0c840;border-radius:3px;background:rgba(240,200,60,.08)"></span>定价锚 ⬡<span class="lv">价格之源</span></div>
+  <div class="lr"><span style="display:inline-block;width:30px;height:16px;border:1.5px solid #2cb980;border-radius:3px"></span>期货品种 ★<span class="lv">含📌有口诀</span></div>
+<div class="lr"><span style="display:inline-block;width:30px;height:16px;border:1px solid rgba(0,0,0,.3);border-radius:3px"></span>中间化工品</div>
+<div class="lr"><span style="display:inline-block;width:30px;height:16px;border:1px dashed rgba(0,0,0,.2);border-radius:3px"></span>终端应用</div>
+  <div class="lh" style="margin-top:6px">操作提示</div>
+<div class="lr" style="color:#888888">滚轮缩放 · 拖拽移动</div>
+<div class="lr" style="color:#888888">点击节点查看详情</div>
+<div class="lr" style="color:#888888">单链视图按拓扑层级排布</div>
+<div class="lr" style="color:#888888">📌 口诀速查 看全部口诀</div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// 色系 & 常量
+// ═══════════════════════════════════════════════════
+const CC={
+  crude_sys: {c:'#e08c20',bg:'#fff8f0'},
+  polyolefin:{c:'#1a9fd8',bg:'#f0f8ff'},
+  aromatic:  {c:'#d03860',bg:'#fff0f5'},
+  polyester: {c:'#28b87a',bg:'#f0fff8'},
+  chlor:     {c:'#c0b020',bg:'#faf8e8'},
+  coal:      {c:'#8060d8',bg:'#f8f5ff'},
+  newenergy: {c:'#2088c8',bg:'#f0f8ff'},
+  rubber:    {c:'#d86020',bg:'#fff5f0'},
+  paper:     {c:'#609c20',bg:'#f8fff0'},
+  fertilizer:{c:'#40c040',bg:'#f0fff0'},
+  phospho:   {c:'#d08030',bg:'#fff8f0'},
+  agri:      {c:'#d8b020',bg:'#fffbf0'},
+  ferrous:   {c:'#c04040',bg:'#fff5f5'},
+  metal:     {c:'#60a0b8',bg:'#f0f8fa'},
+};
+const CHAIN_NAMES={
+  crude_sys: '🛢 原油系',
+  polyolefin:'🔵 聚烯烃链',aromatic:'🌸 芳烃链',polyester:'🟢 聚酯链',
+  chlor:'🟡 盐化工与建材',coal:'⚫ 煤化工链',newenergy:'💎 新能源链',
+  rubber:'🟠 橡胶链',paper:'🟩 纸浆链',
+  fertilizer:'🌾 化肥链',phospho:'🔶 磷化工链',agri:'🌽 农产品链',
+  ferrous:'🪨 黑色建材链',metal:'⚙️ 有色金属链',
+};
+const CHAIN_ORDER=['crude_sys','polyolefin','aromatic','polyester','chlor','coal','newenergy','rubber','paper','fertilizer','phospho','agri','ferrous','metal'];
+const ROLE_LABEL={src:'原料来源',mid:'中间品',fu:'期货品种',end:'终端'};
+const ROLE_ORDER=['src','mid','fu','end'];
+const TOP=72;
+const NH=34, NPADX=14, NPADY=16, TITH=26, FOOTPH=16;
+function nw(n){return n.anchor?130:n.fu?120:n.role==='src'?102:n.role==='end'?96:112;}
+
+// ═══════════════════════════════════════════════════
+// 连线类型：flow=物质流（参与DAG拓扑），sub=替代关系（同层虚线）
+// ═══════════════════════════════════════════════════
+// type 默认 'flow'，sub 类型不参与拓扑层级计算
+
+// ═══════════════════════════════════════════════════
+// 节点数据  ── 实体唯一性原则 ──
+// 已合并重复实体：urea/urea2→urea, ammonia/f_ammonia→ammonia,
+//   coal/f_coal→coal, p_ore/phosphate_ore→phosphate_ore,
+//   caustic/caustic2→caustic, ind_si/ind_si2→ind_si,
+//   hcl_gas/hydrochloric→hcl_gas, lfp/lfp2→lfp
+// ═══════════════════════════════════════════════════
+let NODES=[
+// ── 原油系 crude_sys ──────────────────────────────
+{id:'crude',   ch:'crude_sys',also:['polyolefin','aromatic','polyester'],role:'src',anchor:true,fu:true,
+ lb:'原油',sb:'全链定价锚★INE/SC',
+ desc:'炼制各类成品油与化工原料的源头，所有有机化工品价格之锚。主工艺：常减压蒸馏。布伦特/WTI/INE-SC是三大定价基准。OPEC+产量政策与地缘风险是最大扰动。主要产地：沙特/俄罗斯/美国/伊拉克/伊朗。关键企业：中石化/中石油/中海油。',
+ mn:'原油是总阀门——七大链核心驱动逻辑：\n① 聚烯烃（PE/PP/PVC）：油煤双驱动，原油涨烯烃跟涨\n② 芳烃（纯苯/苯乙烯）：主看原油脸，煤炭影响很小\n③ 聚酯（PX/PTA/EG/短纤/瓶片）：油为主，EG兼看煤\n④ 氯碱（PVC/烧碱）：煤盐双驱动，PVC还看电石\n⑤ 煤化工（甲醇/丙烯/尿素）：主看煤炭脸\n⑥ 建材化工（纯碱/玻璃）：成本需求双驱动\n⑦ LPG：油汽双驱动\n原油大跌→有机化工全线承压；原油大涨→成本全线推升。'},
+
+{id:'residue', ch:'crude_sys',role:'mid',
+ lb:'减压渣油',sb:'重质残渣',
+ desc:'原油减压蒸馏最重质组分，主要去向：①延迟焦化→石油焦（负极材料/电极原料）；②溶剂脱沥青→沥青（道路/防水）。也是调和燃料油的重要组分。'},
+{id:'diesel',  ch:'crude_sys',role:'mid',
+ lb:'柴油/煤油',sb:'中间馏分',
+ desc:'常压蒸馏中间馏分，柴油用于道路运输/农机，煤油用于航空燃料(Jet A-1)。'},
+{id:'lpg',     ch:'crude_sys',also:['polyolefin'],role:'mid',fu:true,
+ lb:'液化石油气 LPG',sb:'燃料/PDH化工双属性★DCE',
+ desc:'丙烷/丁烷为主，来自原油蒸馏副产和天然气加工。民用燃气+PDH化工（丙烷脱氢制丙烯）双重属性。中国进口依赖中东CP价格和美湾MB价格。',
+ mn:'LPG：油汽双驱动。\n原油上涨→LPG跟涨（炼化副产，高度联动）。\n冬季旺季(11-2月)民用燃气旺→价格走强。\nPDH利润>0→丙烷工业需求旺→LPG走强。\nPDH利润<0→停车→LPG走弱。\n中东CP价格（沙特阿美月度定价）→国内进口成本锚。'},
+{id:'hsfo',    ch:'crude_sys',role:'mid',fu:true,
+ lb:'高硫燃料油',sb:'HSFO 380CST★上期所INE',
+ desc:'硫含量>0.5%重质燃料油，主要来自中东（伊朗/沙特）。IMO 2020后船用需求大幅萎缩，转为电厂/工业锅炉/炼化进料。地缘风险是最大短期扰动。',
+ mn:'高硫燃料油=中东供应+地缘风险双驱动。\nIMO 2020是结构性分水岭（船用需求大幅萎缩）。\nHSFO与LSFO价差=脱硫装置(EGCS)安装比例信号。\n伊朗/俄罗斯出口量是关键供给变量（制裁影响大）。'},
+{id:'lsfo',    ch:'crude_sys',role:'mid',fu:true,
+ lb:'低硫燃料油',sb:'VLSFO 0.5%S★上期所INE',
+ desc:'硫含量≤0.5%，符合IMO 2020全球限硫规范，远洋船舶合规主力燃料。新加坡保税市场是全球最大低硫燃料油交割枢纽。',
+ mn:'低硫燃料油=原油+航运需求双驱动。\nHSFO+脱硫成本=LSFO定价基准（价差联动）。\n远洋运量旺则需求增（集运景气指数同向）。'},
+{id:'bitumen', ch:'crude_sys',role:'mid',fu:true,
+ lb:'石油沥青',sb:'道路/防水★上期所',
+ desc:'原油减压渣油经氧化/调和制备。生产成本中原油占75-80%。核心用途：道路建设（约85%）+防水材料。',
+ mn:'沥青=原油成本+基建政策双驱动。\n原油涨→成本涨（占生产成本75-80%，传导最快）。\n旺季4-10月施工，淡季冬季停工（需求季节性显著）。\n焦化利润>沥青利润→炼厂切换为石油焦→沥青供给减少→价格走强。'},
+{id:'t_ship',  ch:'crude_sys',role:'end',lb:'远洋航运',sb:'LSFO/HSFO终端',
+ desc:'远洋船舶的主要能源，IMO 2020是需求结构核心变量，LSFO是合规燃料。'},
+{id:'t_power', ch:'crude_sys',also:['coal'],role:'end',lb:'电厂发电',sb:'工业燃料',
+ desc:'高硫燃料油和煤炭是电厂发电燃料，东南亚和中东仍大量使用燃油发电。'},
+{id:'t_road',  ch:'crude_sys',role:'end',lb:'道路建设',sb:'沥青85%终端',
+ desc:'沥青的最大终端，与基建投资周期高度相关，旺季4-10月。'},
+{id:'t_avia',  ch:'crude_sys',role:'end',lb:'民航燃料',sb:'Jet A-1',
+ desc:'航空煤油最终用户，消耗量与航班客运量高度相关。'},
+{id:'t_cook',  ch:'crude_sys',role:'end',lb:'民用燃气',sb:'居民/餐饮',
+ desc:'LPG罐装燃气的最终用途，冬季旺季明显，价格受供需季节性影响。'},
+{id:'t_gasoline',ch:'crude_sys',role:'end',lb:'成品汽油',sb:'陆路交通终端',
+ desc:'由石脑油/直馏汽油+MTBE+烷基化油+重整汽油等多种组分调和而成的终端产品。'},
+{id:'t_road_trans',ch:'crude_sys',role:'end',lb:'道路运输',sb:'柴油/汽油终端',
+ desc:'公路货运（重卡/轻卡）和乘用车是成品油最大终端。'},
+
+// ── 聚烯烃链 ──────────────────────────────────────
+{id:'naphtha', ch:'polyolefin',also:['aromatic'],role:'src',
+ lb:'石脑油',sb:'轻质馏分',
+ desc:'常压蒸馏轻馏分，两大去向：①蒸汽裂解制乙烯/丙烯；②催化重整制芳烃(BTX)。'},
+{id:'natgas',  ch:'polyolefin',also:['coal','fertilizer'],role:'src',
+ lb:'天然气',sb:'油田伴生气',
+ desc:'与原油伴生或独立产出。关键路径：①分离出乙烷→乙烷裂解制乙烯；②分离出丙烷→PDH制丙烯。也用于制合成氨及作为LPG来源。'},
+{id:'coal_po', ch:'polyolefin',also:['coal'],role:'src',
+ lb:'煤炭（MTO路线）',sb:'煤→甲醇→烯烃',
+ desc:'煤制甲醇经MTO/MTP工艺制乙烯/丙烯，是中国特色的烯烃供给路线，成本与煤价直接挂钩。'},
+{id:'ethylene',ch:'polyolefin',role:'mid',
+ lb:'乙烯',sb:'石化工业之母',
+ desc:'最重要的基础有机化工原料，由石脑油/LPG蒸汽裂解和MTO路线制得。下游：PE、EG、VCM、苯乙烯。'},
+{id:'propylene',ch:'polyolefin',role:'mid',fu:true,
+ lb:'丙烯',sb:'PDH/裂解/FCC/MTO多路线★郑商所PL',
+ desc:'来源多元：PDH(产能占比快速提升)、石脑油裂解副产、FCC副产、MTO/MTP煤化工。郑商所PL期货2025年7月上市。',
+ mn:'丙烯=石脑油裂解+PDH+MTP三路线竞争，PDH产能扩张最快。\n煤炭走强→MTO路线成本上升；原油走强→石脑油裂解成本上升。\nPDH利润<0→停车→PP/丙烯供给减少→价格反弹信号。'},
+{id:'c4frac',  ch:'polyolefin',also:['rubber'],role:'mid',
+ lb:'碳四馏分 C4',sb:'裂解副产',
+ desc:'蒸汽裂解副产混合C4，主要组分：丁二烯(→合成橡胶)、异丁烯(→MTBE)。'},
+{id:'eox',     ch:'polyolefin',role:'mid',
+ lb:'环氧乙烷 EO',sb:'乙烯银催化氧化',
+ desc:'乙烯直接氧化制得，主要水合制乙二醇(EG)，也生产表面活性剂、乙醇胺。'},
+{id:'vcm',     ch:'polyolefin',also:['chlor','coal'],role:'mid',
+ lb:'氯乙烯 VCM',sb:'PVC聚合单体',
+ desc:'PVC直接聚合单体。乙烯法(油路线)和电石法(煤路线)并存，中国电石法占比约74%。'},
+{id:'pe',      ch:'polyolefin',role:'mid',fu:true,
+ lb:'聚乙烯 PE',sb:'LLDPE/HDPE/LDPE★大商所L',
+ desc:'乙烯聚合，农膜/包装薄膜/管材/注塑制品核心材料，通用塑料产量最大品种。',
+ mn:'聚烯烃三兄弟，油煤双驱动。\n原油涨烯烃跟涨；原油大跌全线走弱。\nPE/PP原料以石脑油裂解为主，受原油影响显著，但PDH、煤制烯烃等多元路线同样影响定价。\nPVC中国以电石法为主（约74%产能），电石来自煤炭，煤价是核心成本。'},
+{id:'pp',      ch:'polyolefin',role:'mid',fu:true,
+ lb:'聚丙烯 PP',sb:'均聚/共聚★DCE',
+ desc:'丙烯聚合，塑编袋/无纺布/注塑/家电/汽车零部件核心材料。路线：油制+PDH制+煤制。',
+ mn:'聚烯烃三兄弟油煤双驱动，PP过剩最严重。\nPDH利润<0→停车→PP供给减少→价格反弹信号。\nPP产能增速10-12% vs 需求4-5%→长期供给压力。'},
+{id:'pvc',     ch:'polyolefin',also:['chlor','coal'],role:'mid',fu:true,
+ lb:'PVC 聚氯乙烯',sb:'电石法/乙烯法并存★大商所V',
+ desc:'VCM聚合，建材管材/门窗型材/地板/电线电缆护套，电石法和乙烯法并存。',
+ mn:'氯碱双品种，煤盐双驱动。\n煤炭上涨→PVC跟涨（电石法成本，约74%产能）。\n地产开工好PVC走强（最大需求变量）。'},
+{id:'t_pack',  ch:'polyolefin',role:'end',lb:'包装材料',sb:'薄膜/袋/容器',
+ desc:'PE薄膜/PP编织袋/注塑容器，PE和PP最大终端需求领域。'},
+{id:'t_pipe',  ch:'polyolefin',also:['chlor'],role:'end',lb:'管材型材',sb:'建筑建材',
+ desc:'PE/PVC管材，建筑给排水和电气套管核心材料。'},
+{id:'t_agri',  ch:'polyolefin',role:'end',lb:'农业种植',sb:'农膜/滴灌终端行业',
+ desc:'农用薄膜（地膜/棚膜）和滴灌管道的终端行业，春播（3-5月）和秋覆（8-10月）是旺季。'},
+{id:'t_auto',  ch:'polyolefin',also:['rubber','newenergy'],role:'end',lb:'汽车/交通',sb:'综合终端枢纽',
+ desc:'PP/天然橡胶/动力电池/玻璃等多种化工品的共同终端需求场景。'},
+
+// ── 芳烃链 ──────────────────────────────────────────
+{id:'reformate',ch:'aromatic',role:'src',lb:'重整芳烃',sb:'石脑油催化重整',
+ desc:'石脑油催化重整产出富含苯/甲苯/二甲苯(BTX)的重整油，是芳烃链主要来源之一。'},
+{id:'crk_gas', ch:'aromatic',role:'src',lb:'裂解汽油',sb:'蒸汽裂解C5-C9副产',
+ desc:'乙烯蒸汽裂解副产，富含苯/甲苯/二甲苯，加氢精制后提取芳烃。'},
+{id:'crude_bz',ch:'aromatic',role:'src',lb:'粗苯',sb:'焦化副产→芳烃',
+ desc:'焦化副产粗苯，经加氢精制后得纯苯/甲苯/二甲苯，是芳烃链的煤化工来源。'},
+{id:'btx',     ch:'aromatic',role:'mid',lb:'BTX混合芳烃',sb:'苯/甲苯/二甲苯',
+ desc:'苯(B)甲苯(T)二甲苯(X)混合物，经芳烃联合装置分离提纯得到各组分。'},
+{id:'toluene', ch:'aromatic',role:'mid',lb:'甲苯',sb:'歧化→苯+PX',
+ desc:'可歧化制苯和混合二甲苯，是芳烃链产量平衡的调节节点，也是TDI路线原料。'},
+{id:'mxylene', ch:'aromatic',also:['polyester'],role:'mid',lb:'混合二甲苯',sb:'→PX吸附分离',
+ desc:'含邻/间/对三种异构体，吸附分离制PX，邻二甲苯制苯酐，间二甲苯制IPA。'},
+{id:'ethylbz', ch:'aromatic',role:'mid',lb:'乙苯',sb:'苯+乙烯烃化',
+ desc:'苯与乙烯催化烃化所得，是苯乙烯的直接前体，约95%用于脱氢制苯乙烯。'},
+{id:'phenol',  ch:'aromatic',role:'mid',lb:'苯酚',sb:'异丙苯法',
+ desc:'苯与丙烯→异丙苯→苯酚+丙酮，下游：双酚A(→环氧树脂/PC)、酚醛树脂、己内酰胺(→尼龙6)。'},
+{id:'aniline', ch:'aromatic',role:'mid',lb:'苯胺',sb:'纯苯硝化→加氢',
+ desc:'苯硝化生成硝基苯，硝基苯加氢还原得苯胺，主要生产MDI、橡胶助剂、染料。'},
+{id:'bpa',     ch:'aromatic',role:'mid',lb:'双酚A',sb:'苯酚+丙酮缩合',
+ desc:'苯酚与丙酮缩合，生产聚碳酸酯(PC)和环氧树脂，用于家电/电子/汽车/建筑。'},
+{id:'mdi_tdi', ch:'aromatic',role:'mid',lb:'MDI/TDI',sb:'聚氨酯核心原料',
+ desc:'MDI：苯胺+甲醛→MDI，硬泡/合成革/冰箱保温。TDI：甲苯二异氰酸酯，软泡/弹性体/涂料。'},
+{id:'capro',   ch:'aromatic',role:'mid',lb:'己内酰胺',sb:'→尼龙6单体',
+ desc:'苯→环己酮→肟→贝克曼重排，尼龙6(PA6)的单体，用于工程塑料/纤维/薄膜。'},
+{id:'benzene', ch:'aromatic',role:'src',fu:true,lb:'纯苯',sb:'BTX基础芳烃★大商所BZ',
+ desc:'BTX体系最基础的芳烃，2025年7月8日纯苯期货在大商所正式上市（代码BZ）。下游：苯乙烯/苯酚/苯胺/己内酰胺，几乎所有含苯环的精细化工品都以纯苯为起点。',
+ mn:'芳烃主跟原油走，主看原油脸。\n石脑油强纯苯强；纯苯强苯乙烯/苯酚/苯胺全线强。\n化工装置检修→供应紧→价格走强。\n2025年BZ期货上市后与EB形成套利组合（多EB空BZ）。'},
+{id:'styrene', ch:'aromatic',role:'mid',fu:true,lb:'苯乙烯 EB',sb:'乙苯脱氢→单体★大商所EB',
+ desc:'纯苯与乙烯烃化生成乙苯，乙苯脱氢制苯乙烯。大商所EB期货，2019年9月上市。下游：PS/ABS树脂/SBR合成橡胶。',
+ mn:'苯乙烯=纯苯×乙烯双重跟踪。\n家电包装需求好苯乙烯涨。\n苯乙烯-纯苯-乙烯价差=加工利润。'},
+{id:'t_appl',  ch:'aromatic',role:'end',lb:'家电电子',sb:'PS/ABS/PC壳体',
+ desc:'聚苯乙烯(PS)/ABS/PC，家电外壳和电子产品核心工程塑料。'},
+{id:'t_pu',    ch:'aromatic',role:'end',lb:'聚氨酯制品',sb:'泡沫/弹性体/涂料',
+ desc:'MDI/TDI聚合，建筑保温/冰箱/汽车坐垫/合成革的核心材料。'},
+{id:'t_ep',    ch:'aromatic',role:'mid',lb:'环氧树脂',sb:'双酚A+环氧氯丙烷缩聚',
+ desc:'双酚A与环氧氯丙烷缩聚制得，半成品，固化成型后用于电子电路板/风电叶片/防腐涂层。'},
+{id:'t_nylon', ch:'aromatic',role:'mid',lb:'尼龙树脂 PA6/PA66',sb:'己内酰胺/己二酸缩聚',
+ desc:'己内酰胺→PA6（尼龙6）和己二酸/己二胺→PA66（尼龙66），工程塑料，再加工为纤维/注塑件/薄膜后流向汽车/纺织/工业终端。'},
+// 芳烃链真正的终端行业节点
+{id:'t_pcb',       ch:'aromatic',role:'end',
+ lb:'电子电路板/半导体',sb:'芳烃合成材料终端',
+ desc:'环氧树脂/聚碳酸酯等芳烃衍生材料的核心终端——PCB基板/IC封装/半导体器件。'},
+{id:'t_wind_blade',ch:'aromatic',role:'end',
+ lb:'风电/复合材料',sb:'环氧树脂/玻纤终端',
+ desc:'环氧树脂+玻璃纤维/碳纤维固化成型风电叶片/船体/压力容器/汽车轻量化复合材料，风电装机量是最大增量驱动。'},
+{id:'t_coating',   ch:'aromatic',role:'end',
+ lb:'涂料/油漆',sb:'芳烃树脂终端',
+ desc:'醇酸树脂/丙烯酸乳液/聚氨酯涂料/环氧防腐涂料，涂料是芳烃合成树脂最大的终端应用场景之一。'},
+{id:'t_fiber_ind', ch:'aromatic',role:'end',
+ lb:'化纤/纺织',sb:'PA/涤纶芳烃终端',
+ desc:'尼龙6（PA6）/尼龙66（PA66）/芳纶，纺织/汽车帘子布/工业过滤材料核心化纤品种。'},
+
+// ── 聚酯链 ──────────────────────────────────────────
+{id:'px',      ch:'polyester',also:['aromatic'],role:'src',fu:true,
+ lb:'PX 对二甲苯',sb:'BTX基础芳烃★郑商所PX',
+ desc:'混合二甲苯吸附分离/异构化制得，PTA的直接原料。主要企业：浙江石化/恒力石化/恒逸石化/荣盛石化。',
+ mn:'聚酯整条链看原油，PX/PTA油带路。\nPX-石脑油价差=PX加工利润（PXN价差）。'},
+{id:'pta',     ch:'polyester',role:'mid',fu:true,lb:'PTA',sb:'精对苯二甲酸★郑商所',
+ desc:'PX氧化制得，与EG缩聚生产聚酯。国内总产能约9470万吨（2025年底）。主要企业：恒力石化/浙石化/荣盛/逸盛。',
+ mn:'聚酯整条链看原油，PX/PTA油带路。\nPTA完全由原油路线（石脑油→重整→PX→PTA），与煤炭无关。\nPTA加工利润=PTA现价-PX×0.655，目标区间400-600元/吨。'},
+{id:'eg',      ch:'polyester',also:['coal'],role:'mid',fu:true,
+ lb:'乙二醇 EG',sb:'油制+煤制双路线★DCE',
+ desc:'与PTA缩聚生产聚酯核心原料。油制（乙烯→EO→EG，产能约66%）和煤制（合成气草酸酯法CO+H₂→EG，产能约34%）并存。进口依存度约26%，港口库存是短期核心信号。',
+ mn:'乙二醇特殊：油煤都能做，是聚酯链唯一有明显煤炭影响的品种。\n油制约66%（乙烯→EO→EG）：原油涨→成本涨。\n煤制约34%（合成气草酸酯法，合成气是实际原料）：煤炭涨→成本涨。\n港口库存是最核心短期信号。'},
+{id:'sfib',    ch:'polyester',role:'mid',fu:true,lb:'涤纶短纤',sb:'聚酯下游纺织★郑商所PF',
+ desc:'聚酯切片纺短纤，纺织服装/家纺/无纺布，与棉花、粘胶短纤互为替代品。',
+ mn:'纺织服装好短纤涨。\n聚酯整条链看原油。\n棉价高则涤纶短纤替代需求旺（竞争替代逻辑）。'},
+{id:'bottle',  ch:'polyester',role:'mid',fu:true,lb:'瓶片 PET',sb:'食品级聚酯★广期所',
+ desc:'食品级聚酯，矿泉水/饮料/食品包装瓶核心材料，夏季旺季明显。',
+ mn:'饮料包装好瓶片涨。\n聚酯整条链看原油。\n夏季旺季(5-9月)需求集中。'},
+{id:'pet_chip',ch:'polyester',role:'mid',lb:'聚酯切片PET',sb:'PTA+EG缩聚',
+ desc:'PTA与EG酯化缩聚所得，是涤纶长丝/短纤/瓶片/BOPET薄膜的共同前体。'},
+{id:'filament',ch:'polyester',role:'mid',lb:'涤纶长丝',sb:'POY/DTY/FDY',
+ desc:'聚酯切片熔融纺丝，用于纺织服装/家纺/工业丝，纺织行业核心化纤品种。'},
+{id:'pet_film',ch:'polyester',role:'mid',lb:'聚酯薄膜BOPET',sb:'双向拉伸',
+ desc:'双向拉伸PET薄膜，用于光伏背板/包装膜/电子绝缘膜，光伏产业驱动需求增长。'},
+{id:'t_text',  ch:'polyester',also:['paper'],role:'end',lb:'纺织服装',sb:'化纤面料终端',
+ desc:'涤纶长丝/短纤/粘胶纤维的核心终端，受纺织出口订单和国内消费影响。'},
+{id:'t_drink', ch:'polyester',role:'end',lb:'饮料食品',sb:'PET瓶包装',
+ desc:'PET瓶的最终用户，夏季是饮料旺季，带动瓶片需求。'},
+// PBAT 修正归属：三大原料PTA+己二酸+BDO，属聚酯/煤化工链交叉品种
+{id:'pbat_resin',  ch:'polyester',also:['coal'],role:'mid',
+ lb:'PBAT 可降解塑料',sb:'芳脂共聚酯（PTA+己二酸+BDO）',
+ desc:'对苯二甲酸（PTA）+己二酸+BDO三元共聚酯，全生物可降解塑料树脂，归属聚酯链（含苯环芳香族+脂肪族）。受国家限塑政策强驱动，加工成购物袋/快递袋/农膜后流向终端。'},
+
+// ── 氯碱链 ──────────────────────────────────────────
+{id:'salt',    ch:'chlor',role:'src',lb:'原盐',sb:'海盐/矿盐',
+ desc:'电解食盐水的基础原料，也是纯碱（侯氏制碱法）的重要原料之一。'},
+{id:'limestone',ch:'chlor',role:'src',lb:'石灰石',sb:'CaCO₃矿物',
+ desc:'纯碱氨碱法和玻璃生产的核心原料，也是电石生产原料（钙源）之一。'},
+{id:'sio2',    ch:'chlor',also:['newenergy'],role:'src',lb:'石英砂',sb:'SiO₂矿物',
+ desc:'平板玻璃、光伏玻璃及工业硅的基础矿物原料。'},
+{id:'brine',   ch:'chlor',role:'mid',lb:'饱和食盐水',sb:'氯碱电解进料',
+ desc:'原盐溶解精制后进入离子膜电解槽，电解过程同时产出烧碱（NaOH）、氯气（Cl₂）和氢气（H₂）三种联产品。电力成本占生产成本约60%，是典型的高耗能行业。'},
+{id:'chlorine',ch:'chlor',also:['polyolefin'],role:'mid',lb:'氯气 Cl₂',sb:'氯碱三联产之一',
+ desc:'电解食盐水的主要联产品之一。主要消耗路径包括：①用于生产PVC（约占35%）；②制备环氧氯丙烷（ECH）；③合成盐酸；④生产氯化石蜡等精细化学品。'},
+{id:'edc',     ch:'chlor',role:'mid',lb:'二氯乙烷 EDC',sb:'氯气+乙烯→VCM前体',
+ desc:'乙烯与氯气直接氯化（DC）或氧氯化（OC）制得，裂解脱氯化氢生成VCM。国际通行的"乙烯法PVC"工艺路线是：乙烯→EDC→VCM→PVC。',
+ mn:'EDC是氯乙烯法PVC的必经中间体。\nEDC→VCM→PVC是国际标准氯乙烯路线。\n与电石法（乙炔路线）是PVC两条并行路线。'},
+{id:'ecpx',    ch:'chlor',role:'mid',lb:'环氧氯丙烷',sb:'丙烯+氯气→环氧树脂原料',
+ desc:'主要由丙烯氯醇化法或甘油法制备，是生产环氧树脂的核心原料，广泛应用于风电叶片、电路板和防腐涂料等领域。'},
+{id:'hcl_gas', ch:'chlor',role:'mid',lb:'盐酸/氯化氢',sb:'氯碱副产',
+ desc:'由氯气与氢气合成氯化氢后溶于水制得。在氯碱工业中，生产盐酸是调节“氯碱平衡”的重要手段，也是电石法PVC中乙炔与HCl加成制VCM的原料。'},
+{id:'caustic', ch:'chlor',role:'mid',fu:true,lb:'烧碱 NaOH',sb:'氯碱三联产之一★郑商所SH',
+ desc:'电解食盐水三联产品之一（与氯气、氢气同源共生）。氧化铝/造纸/印染/水处理核心原料。2023年9月15日烧碱期货在郑商所上市（代码SH）。',
+ mn:'氯碱双品种，煤盐双驱动。\n煤涨烧碱电力成本涨（电价与动力煤联动）。\n原盐走强→氯碱走强。\n造纸/印染/氧化铝需求好→烧碱上涨。'},
+{id:'chlor_h2',ch:'chlor',role:'mid',lb:'氢气（氯碱联产）',sb:'氯碱三联产之一',
+ desc:'电解食盐水联产的高纯度氢气。主要用途包括：①生产双氧水；②苯胺加氢（如MDI原料）；③石油炼化加氢；④合成盐酸。'},
+{id:'soda',    ch:'chlor',also:['newenergy'],role:'mid',fu:true,
+ lb:'纯碱 Na₂CO₃',sb:'玻璃核心助熔★郑商所SA',
+ desc:'平板玻璃/光伏玻璃/洗涤剂/无机盐的核心助熔原料。氨碱法（石灰石+盐+合成氨）或侯氏法制备。',
+ mn:'建材化工双品种，成本需求双驱动。\n煤炭上涨→纯碱跟涨（能源成本）。\n地产/光伏好→玻璃开工旺→纯碱需求旺。\n玻璃是纯碱最大下游（占消费超50%），光伏玻璃是增量核心。'},
+{id:'flat_gl', ch:'chlor',role:'mid',fu:true,lb:'平板玻璃',sb:'浮法玻璃★郑商所FG',
+ desc:'由纯碱、石英砂和石灰石经高温熔融、浮法成型制成。地产竣工周期和光伏装机量是影响其需求的核心变量。冷修窑炉产线是供给侧的关键调节因素。',
+ mn:'建材化工链：地产光伏好→玻璃走强。\n纯碱涨→玻璃成本涨（成本需求双驱动）。\n地产竣工装修旺→建筑玻璃需求旺。\n光伏玻璃是增量驱动。'},
+{id:'t_const', ch:'chlor',also:['crude_sys','polyolefin'],role:'end',lb:'建筑地产',sb:'综合建材终端',
+ desc:'PVC/平板玻璃/烧碱/沥青的共同终端，受地产政策影响显著。'},
+{id:'t_paper_i',ch:'chlor',role:'end',lb:'造纸工业',sb:'烧碱需求终端',
+ desc:'烧碱在纸浆蒸煮和漂白工艺中用量巨大，是烧碱的传统且重要的下游需求领域，约占烧碱总消费量的12%。'},
+
+// ── 煤化工链 ──────────────────────────────────────────
+{id:'coal',    ch:'coal',also:['polyolefin','chlor','fertilizer','metal'],role:'src',anchor:true,
+ lb:'煤炭',sb:'中国特色定价锚',
+ desc:'中国特色替代路线核心定价锚，与原油强成本联动但可独立定价。主用途：煤化工原料、火力发电、氯碱电力成本。',
+ mn:'煤化工品种主看煤炭脸——\n煤涨→甲醇/尿素/焦炭全线跟涨\n煤涨→PVC跟涨（电石法成本，约70%产能）\n煤涨→烧碱电力成本上升（氯碱工业高能耗）\n煤涨→乙二醇煤制路线（约43%产能）成本上升\n煤化工链：煤炭→合成气→甲醇→丙烯/乙烯/尿素'},
+{id:'syngas',  ch:'coal',role:'mid',lb:'合成气 CO+H₂',sb:'煤气化枢纽',
+ desc:'煤气化制得，是煤化工的核心枢纽：向下合成甲醇→MTO烯烃；合成氨→尿素；也可草酸酯法制乙二醇（EG）。'},
+{id:'ammonia', ch:'coal',also:['fertilizer'],role:'mid',lb:'合成氨',sb:'氮肥/纯碱前驱',
+ desc:'合成气（H₂+N₂）在铁催化剂下合成（国内约70%为煤头路线）。主要下游：尿素(氮肥)、复合肥、硝酸、纯碱(侯氏法需氨)。'},
+{id:'coke_gas',ch:'coal',role:'mid',lb:'焦炉气',sb:'焦化副产',
+ desc:'焦化副产，主要成分H₂/CH₄，可合成甲醇/合成氨或城市燃气。'},
+{id:'coal_tar',ch:'coal',role:'mid',lb:'煤焦油',sb:'焦化副产',
+ desc:'焦化副产液体，含萘/蒽/苯酚，深加工生产炭黑原料油/改性沥青/萘(→苯酐)。'},
+{id:'carbide', ch:'coal',also:['chlor'],role:'mid',lb:'电石',sb:'焦炭+石灰电弧炉',
+ desc:'焦炭+生石灰电弧炉高温反应，水解制乙炔，是电石法PVC和BDO/PTMEG/氨纶路线的核心中间体。石灰石是钙源，不可缺失。'},
+{id:'acetylene',ch:'coal',role:'mid',lb:'乙炔',sb:'电石水解',
+ desc:'电石水解所得，主要用途：①与HCl加成制VCM(电石法PVC)；②与甲醛反应制BDO(→PTMEG→氨纶)。'},
+{id:'bdo',     ch:'coal',role:'mid',lb:'BDO',sb:'1,4-丁二醇',
+ desc:'乙炔/甲醛法制备，下游：PTMEG(→氨纶/TPU)、PBT工程塑料、NMP溶剂(锂电池)、THF。'},
+{id:'ptmeg',   ch:'coal',role:'mid',lb:'PTMEG',sb:'聚四亚甲基醚二醇',
+ desc:'BDO开环聚合制得，是氨纶纤维和热塑性聚氨酯弹性体(TPU)的核心原料。'},
+{id:'meth_ds', ch:'coal',role:'mid',lb:'甲醇衍生物',sb:'甲醛/醋酸/MTBE',
+ desc:'甲醇下游衍生物：甲醛(→酚醛/脲醛树脂)、醋酸(→醋酸乙酯/PTA溶剂)、二甲醚、MTBE。'},
+{id:'methanol',ch:'coal',also:['polyolefin'],role:'fu',fu:true,lb:'甲醇',sb:'煤化工枢纽品种★DCE/CZCE',
+ desc:'煤制合成气催化合成，核心用途：MTO/MTP制烯烃/MTBE/醋酸/甲醛。中国是全球最大甲醇消费国，伊朗是最大进口来源（约60%）。',
+ mn:'煤化工品种，主看煤炭脸。\n煤涨甲醇跟涨（国内煤制为主，成本联动直接）。\n伊朗是最大进口来源（60%），中东局势是最大外部冲击。\nMTO利润好→甲醇需求旺（MTO是最大边际消费增量）。'},
+{id:'urea',    ch:'coal',also:['fertilizer'],role:'fu',fu:true,lb:'尿素',sb:'农业氮肥刚需★郑商所',
+ desc:'合成氨+CO₂合成，全球产量最大的含氮化肥（含氮46%）。国内煤头尿素占比约70%，气头约占30%。出口受法检政策约束。工业需求（胶合板脲醛树脂/车用尿素SCR）是需求稳定器。',
+ mn:'煤化工品种，主看煤炭脸。\n农业春耕旺季（2-5月）/秋种旺季（8-10月）→需求集中→价格走强。\n出口政策（法检限制）是价格下限保护阀。'},
+{id:'coke',    ch:'coal',also:['metal'],role:'fu',fu:true,lb:'焦炭',sb:'高炉还原剂★DCE',
+ desc:'焦煤干馏所得，高炉炼铁核心还原剂（占比>85%），是黑色系"煤焦钢"三兄弟中间环节。',
+ mn:'焦炭=钢铁产业晴雨表。\n焦煤涨→焦炭成本涨（传导清晰）；钢材好→高炉需求旺。\n钢厂高炉开工率和铁水日产量是焦炭需求实时信号。'},
+{id:'t_fert',  ch:'coal',role:'end',lb:'农业化肥',sb:'氮肥刚需',
+ desc:'尿素/复合肥核心需求，春耕秋种季是旺季。'},
+{id:'t_steel', ch:'coal',also:['metal'],role:'end',lb:'钢铁冶炼',sb:'高炉炼铁',
+ desc:'焦炭最大终端需求，钢铁景气度直接驱动焦炭价格。'},
+{id:'t_spandex',ch:'coal',role:'end',lb:'氨纶弹性纤维',sb:'纺织弹性',
+ desc:'PTMEG+MDI聚合，高弹力纺织纤维，运动服/泳衣/袜子核心材料。'},
+
+// ── 新能源链 ──────────────────────────────────────────
+{id:'si_ore',  ch:'newenergy',role:'src',lb:'硅石',sb:'二氧化硅（SiO₂）自然资源',
+ desc:'硅元素的自然矿物来源，主要成分为二氧化硅。经碳质还原剂（煤、石油焦、木炭等）在电弧炉中还原冶炼得到工业硅，也是高纯石英砂的原料。'},
+{id:'li_ore',  ch:'newenergy',role:'src',lb:'锂辉石/盐湖卤水',sb:'锂资源',
+ desc:'锂硬岩型锂资源（以锂辉石为主，主产地澳洲）和卤水型锂资源（南美盐湖、西藏盐湖）是全球锂的两大来源。盐湖提锂技术实现关键突破，回收率大幅提升。'},
+{id:'cobalt_ore',ch:'newenergy',role:'src',
+ lb:'钴',sb:'三元电池关键金属',
+ desc:'主产地刚果（金），全球钴储量占比约55%，产量占比约70%。三元正极（NCM/NCA）关键原料，也用于高温合金、钴酸锂。高镍化趋势带来长期降钴压力，刚果（金）实施出口配额制影响供给。刚果（金）出口配额：2025年四季度1.81万吨。',
+ mn:'钴跟三元电池需求走。\n刚果金政局/开采政策是最大供给扰动。\n高镍化趋势（降钴量）→长期需求压力。'},
+{id:'ind_si',  ch:'newenergy',role:'mid',fu:true,lb:'工业硅',sb:'碳热还原冶炼★广期所',
+ desc:'硅石与碳质还原剂（煤、石油焦、木炭等）在电弧炉中高温还原反应生成，纯度97-99%。三大去向：多晶硅（光伏）、有机硅单体、铝硅合金。广州期货交易所上市品种。2025年全国工业硅名义产能960万吨，产量470万吨，开工率48.95%。',
+ mn:'光伏产业好→工业硅/多晶硅需求旺。\n有机硅景气影响工业硅价格。\n西南水电丰枯期影响供给和价格。'},
+{id:'poly_si', ch:'newenergy',role:'mid',lb:'多晶硅',sb:'改良西门子法提纯',
+ desc:'工业硅经三氯氢硅精馏提纯（改良西门子法），纯度9N-11N（光伏级），是单晶硅片的核心原料，光伏产业链价格锚点。2025年国内产量129.8万吨，同比-28.3%。'},
+{id:'wafer',   ch:'newenergy',role:'mid',lb:'单晶硅片',sb:'拉晶切片',
+ desc:'多晶硅→直拉法（CZ法）生长单晶棒→金刚线切片制成，是光伏电池和半导体芯片的共同基础材料。单晶硅电池市场占据主导地位。'},
+{id:'org_si',  ch:'newenergy',role:'mid',lb:'有机硅单体',sb:'氯甲烷+工业硅',
+ desc:'工业硅与氯甲烷在铜催化剂下反应，主产物二甲基二氯硅烷，水解缩合得硅橡胶/硅油/硅树脂。'},
+{id:'li_salt', ch:'newenergy',role:'mid',lb:'锂中间盐',sb:'氯化锂/硫酸锂',
+ desc:'锂辉石/盐湖卤水经提锂工艺得到的中间体，可向下游苛化制氢氧化锂，或碳酸化制碳酸锂。盐湖提锂采用萃取法、吸附法等技术路线。'},
+{id:'lfp',     ch:'newenergy',also:['phospho'],role:'mid',lb:'磷酸铁锂 LFP',sb:'LFP正极材料',
+ desc:'以碳酸锂为锂源、磷酸铁为铁磷源高温烧结合成，动力/储能电池主流正极材料，具有安全性高、循环寿命长、成本低的优势。国内动力电池市场份额超78%。'},
+{id:'ncm',     ch:'newenergy',role:'mid',lb:'三元材料 NCM',sb:'高镍三元正极',
+ desc:'氢氧化锂+三元前驱体（镍钴锰/镍钴铝）高温烧结而成，高能量密度正极材料，适用于高端长续航电动车。高镍化（NCM811/NCA）是技术趋势。'},
+{id:'licarb',  ch:'newenergy',role:'fu',fu:true,lb:'碳酸锂',sb:'LFP正极定价锚★广期所',
+ desc:'生产磷酸铁锂正极材料核心原料，锂电产业链价格风向标。主要企业：赣锋锂业、天齐锂业、雅化集团、融捷股份等。',
+ mn:'驱动因素：储能需求爆发+新能源汽车增长+锂矿供给扰动。\n供应端：锂矿/盐湖供给是成本锚。\n盐湖提锂技术进步降低生产成本。'},
+{id:'lioh',    ch:'newenergy',role:'fu',fu:true,lb:'氢氧化锂',sb:'高镍三元正极',
+ desc:'高镍三元正极(NMC811/NCA)的核心原料，高端新能源车锂电池首选。',
+ mn:'高镍三元需求→氢氧化锂需求增长。\n与碳酸锂存在技术路线竞争（三元 vs LFP）。\n高镍化趋势下氢氧化锂需求占比提升。'},
+{id:'cobalt_salt', ch:'newenergy',role:'mid',
+ lb:'硫酸钴/四氧化三钴',sb:'钴中间体',
+ desc:'钴矿石湿法冶炼产出，是三元前驱体（NCM）和钴酸锂（LCO）的直接原料，中国是最大精炼产地。受刚果（金）出口配额政策影响，2025年以来钴价大幅上涨。2026年硫酸钴价格随钴价联动。'},
+{id:'ncm_precursor',ch:'newenergy',role:'mid',
+ lb:'三元前驱体 NCM',sb:'镍钴锰共沉淀',
+ desc:'硫酸镍、硫酸钴、硫酸锰经共沉淀工艺制成，是三元正极材料的直接前驱体。NCM前驱体随镍、钴、锰三种金属价格联动，三种金属元素缺一不可。'},
+{id:'t_pv',    ch:'newenergy',role:'end',lb:'光伏发电',sb:'太阳能组件终端',
+ desc:'单晶硅片→太阳能电池→光伏组件，是光伏发电核心产品，装机量驱动需求。'},
+{id:'t_batt',  ch:'newenergy',role:'end',lb:'动力储能',sb:'锂电池终端',
+ desc:'LFP/三元正极材料的最终应用场景，涵盖新能源汽车动力电池和储能电站两大领域。磷酸铁锂动力电池国内装机份额已达78.5%。'},
+{id:'t_orgsi', ch:'newenergy',role:'end',lb:'有机硅制品',sb:'硅橡胶/硅油/树脂',
+ desc:'有机硅材料终端制品，具有耐高温、耐老化、电绝缘等优异性能，广泛应用于日化、电子、建筑、医疗等领域。'},
+{id:'t_al',    ch:'newenergy',role:'end',lb:'铝合金',sb:'轻量化材料',
+ desc:'工业硅与铝熔炼制成的合金材料，用于汽车轻量化（新能源车车身）、航空航天、建筑等领域。新能源汽车增长带动铝硅合金需求。'},
+
+// ── 橡胶链 ──────────────────────────────────────────
+{id:'rtree',   ch:'rubber',role:'src',lb:'橡胶树',sb:'东南亚产区',
+ desc:'天然橡胶的生物来源，主产区：泰国/印尼/马来西亚，产量受降雨/停割季影响显著。'},
+{id:'butadiene',ch:'rubber',also:['polyolefin'],role:'mid',lb:'丁二烯',sb:'C4馏分抽提',
+ desc:'主要来自乙烯裂解C4馏分抽提（乙腈法/DMF法/NMP法），是顺丁橡胶(BR)、丁苯橡胶(SBR)、丁腈橡胶(NBR)的核心原料。'},
+{id:'latex',   ch:'rubber',role:'mid',lb:'天然胶乳',sb:'鲜胶初加工',
+ desc:'橡胶树割胶所得，加工为全乳胶/标准胶/烟片胶，是天然橡胶期货交割的实物来源。'},
+{id:'sbr',     ch:'rubber',role:'mid',lb:'丁苯橡胶 SBR',sb:'苯乙烯+丁二烯',
+ desc:'丁二烯与苯乙烯共聚，综合性能好，在半钢胎（乘用车）中用量较高，是产量最大的合成橡胶。'},
+{id:'br',      ch:'rubber',role:'mid',lb:'顺丁橡胶 BR',sb:'丁二烯聚合',
+ desc:'丁二烯配位聚合，顺式含量高，耐磨性优异，主要用于轮胎（尤其全钢胎胎面）、HIPS改性等。'},
+{id:'nbr',     ch:'rubber',role:'mid',lb:'丁腈橡胶 NBR',sb:'丁二烯+丙烯腈',
+ desc:'丁二烯与丙烯腈共聚，耐油性极好，广泛用于耐油密封件（O型圈、油封）、燃油管、工业手套等。'},
+{id:'nr',      ch:'rubber',role:'fu',fu:true,lb:'天然橡胶',sb:'全乳胶★SHFE',
+ desc:'橡胶树割胶所得，核心用途：轮胎（占全球天然橡胶消费约70%）[citation:2]、胶管/胶带、鞋材等，与SBR/BR互为替代。主产区：泰国（35%）/印尼（22%）/马来西亚（7%）。',
+ mn:'天然橡胶=东南亚产区+汽车销量双驱动。\n东南亚停割季（泰国3-4月/9-10月）→供给减少→价格走强。\n汽车产销量是核心需求驱动（轮胎占70%）。'},
+{id:'rss20',   ch:'rubber',role:'fu',fu:true,lb:'20号胶',sb:'标准橡胶 STR20',
+ desc:'标准橡胶(STR20/RSS4)，全球汽车轮胎核心原料，占轮胎用天然橡胶约80%。',
+ mn:'20号胶=轮胎原料风向标。\n汽车产销好需求旺。\n东南亚停割季供给减少→价格走强。'},
+{id:'t_tire',  ch:'rubber',role:'end',lb:'轮胎制造',sb:'汽车配套',
+ desc:'天然胶+SBR+BR并用，全钢胎（重卡）天胶占比高（约32.5%），半钢胎（乘用车）合成胶占比高（约27%），是橡胶最大终端市场。'},
+{id:'t_tape',  ch:'rubber',role:'end',lb:'胶带胶管',sb:'橡胶制品',
+ desc:'主要用于输送带、传动带、工业胶管及汽车软管等，其中耐油胶管是丁腈橡胶(NBR)的重要应用领域。'},
+
+// ── 纸浆链 ──────────────────────────────────────────
+{id:'wood',    ch:'paper',role:'src',lb:'木材/废纸',sb:'针叶/阔叶浆木',
+ desc:'造纸核心原料。针叶浆(NBSK)纤维长(2-3.5mm)强度高，阔叶浆(BHKP)纤维短(0.8-1.1mm)白度高成本低，废纸浆(OCC)为包装纸主要原料。'},
+{id:'dissolve_pulp',ch:'paper',role:'src',
+ lb:'溶解浆',sb:'高纯纤维素浆(α-纤维素>90%)',
+ desc:'高纯化纤维素浆，用于粘胶纤维/莱赛尔/醋酸纤维。中国进口依存度高达89.8%，南美巴西桉木浆/北美加拿大针叶浆为主要来源。'},
+{id:'cotton',  ch:'agri',also:['paper'],role:'src',fu:true,
+ lb:'棉花',sb:'纺织天然基准★郑商所',
+ desc:'天然纤维，纺织品质量基准。棉价高时涤纶/粘胶短纤替代需求增加，新疆棉是国内产地核心，进口棉受配额管控。',
+ mn:'棉花=纺织产业晴雨表。\n郑棉是国内定价，进口受配额限制。\n棉价高→涤纶/粘胶短纤替代增（竞争替代逻辑）。\n新疆棉产量（天气/政策）是核心供给变量。'},
+{id:'pulp_mid',ch:'paper',role:'mid',lb:'纸浆（中间）',sb:'制浆工艺',
+ desc:'木材经化学或机械法制浆。针叶浆纤维长强度高，阔叶浆成本低白度高。高纯度品种（溶解浆）也是粘胶纤维原料。'},
+{id:'viscose', ch:'paper',role:'mid',lb:'粘胶纤维',sb:'浆粕（溶解浆）→碱化→黄化→纺丝',
+ desc:'棉以溶解浆为原料经湿法纺丝制得，属再生纤维素纤维。与涤纶短纤在纺织市场互为替代品（价格竞争），但制造路线与性能截然不同。'},
+{id:'paper_pu',ch:'paper',role:'fu',fu:true,lb:'纸浆',sb:'针叶浆/阔叶浆',
+ desc:'造纸核心原料，欧美和南美是主要供给来源，中国进口依存度高。',
+ mn:'欧美纸浆供给收缩→价格走强。\n下游纸厂开工率和纸浆库存是关键指标。\n包装纸需求受电商驱动持续增长。'},
+{id:'t_paper', ch:'paper',role:'end',lb:'造纸包装',sb:'文化/包装/卫生纸',
+ desc:'纸浆最大终端，包装纸受电商驱动增长，文化纸受无纸化趋势影响需求放缓。'},
+{id:'packaging_paper',ch:'paper',role:'end',
+ lb:'包装纸/瓦楞纸',sb:'电商物流驱动',
+ desc:'废纸（OCC）或木浆制成，电商快递包装是近年最大增量驱动。',
+ mn:'包装纸=电商物流晴雨表。\n电商旺季（618/双十一）前备货带动需求。\n废纸（OCC）价格是核心成本。'},
+{id:'lyocell',     ch:'paper',role:'end',
+ lb:'莱赛尔/天丝',sb:'溶解浆NMMO纺丝',
+ desc:'溶解浆在NMMO溶剂中溶解直接纺丝，工艺绿色闭环（溶剂回收率>99%），强度高/吸湿好，是高端纤维素纤维。对溶解浆纯度要求高于普通粘胶纤维'},
+
+// ── 化肥链 fertilizer ──────────────────────────────
+// 注：氨、尿素、煤炭已合并为主链单一实体（coal, ammonia, urea）
+// 化肥链通过 also 属性复用这些节点
+{id:'sulfur',  ch:'fertilizer',role:'src',
+ lb:'硫磺',sb:'炼厂副产/进口',
+ desc:'炼油脱硫副产品或天然气净化副产品，主要用途：硫酸→湿法磷酸→磷铵。是磷肥成本的核心原料之一。',
+ mn:'硫磺涨磷肥必跟——\n硫磺→硫酸→磷酸→磷铵，传导链短且直接。\n中东硫磺是主要供应来源，出口政策影响价格。'},
+{id:'phosphate_ore',ch:'fertilizer',also:['phospho'],role:'src',
+ lb:'磷矿石',sb:'三磷专项保护',
+ desc:'磷肥及磷化工的基础战略矿产。中国磷矿石储量有限但产量全球领先，实施保护性开采政策。新能源（磷酸铁锂）需求增加强化资源稀缺性。',
+ mn:'磷矿石是磷肥/磷化工的定价锚——\n磷矿涨→磷酸成本涨→磷铵全线走强。\n政策性停采期是价格冲击的重要时点。'},
+{id:'sulphuric_acid',ch:'fertilizer',also:['phospho','chlor'],role:'mid',
+ lb:'硫酸',sb:'硫磺燃烧/有色冶炼副产',
+ desc:'硫磺燃烧制备（主流）或有色金属冶炼烟气回收，是湿法磷酸（磷肥）和无机化工的基础原料，全球产量最大的化工品之一。'},
+{id:'liquid_ammonia',ch:'fertilizer',also:['coal'],role:'mid',
+ lb:'液氨',sb:'磷铵氮源',
+ desc:'合成氨冷却液化，是磷铵（MAP/DAP）/硝酸铵/复合肥的氮源，也用于制冷，随合成氨（煤/气成本）联动，春耕前旺季需求集中。'},
+{id:'phos_acid',   ch:'fertilizer',also:['phospho'],role:'mid',
+ lb:'磷酸',sb:'湿法/热法两路线',
+ desc:'湿法（磷矿石+硫酸，主要用于磷肥）和热法（黄磷氧化，纯度高用于食品/电子）并存，是磷铵/磷酸铁/磷酸盐的核心中间品。'},
+{id:'map',     ch:'fertilizer',role:'fu',fu:true,
+ lb:'磷酸一铵 MAP',sb:'磷肥★现货定价',
+ desc:'磷酸+液氨中和，氮磷复合肥，占磷肥约40%，与磷矿石/硫磺/液氨三因素联动。',
+ mn:'磷铵三因素：磷矿石、硫磺、液氨。\n硫磺涨磷铵最敏感，传导最快。\n春耕前备货旺，旺季前价格走强。'},
+{id:'dap',     ch:'fertilizer',role:'fu',fu:true,
+ lb:'磷酸二铵 DAP',sb:'磷肥★现货定价',
+ desc:'磷酸+液氨高氨比中和，磷铵旗舰品种，中国是全球最大出口国。',
+ mn:'磷酸二铵：春耕旺、出口约束、三因素联动。\n与一铵联动走，同涨同跌是常态。\n中国出口量影响全球DAP定价（全球最大出口国）。'},
+{id:'potash',  ch:'fertilizer',role:'fu',fu:true,
+ lb:'氯化钾',sb:'钾肥★进口依赖',
+ desc:'三大肥中进口依存度最高的品种，主要来自加拿大/白俄罗斯/俄罗斯，年度大合同价是定价锚。',
+ mn:'钾肥=进口大合同风向标。\n全球寡头垄断（加拿大/白俄），出口国政策是核心。\n大合同谈判结果锚定年度价格。'},
+{id:'complex_fert',ch:'fertilizer',role:'end',
+ lb:'复合肥/专用肥',sb:'氮磷钾三元复合',
+ desc:'氮磷钾三元复合肥及水溶肥等新型肥料，占农业施肥比例约40%，受上游氮磷钾原料价格共同驱动。'},
+{id:'t_crop',  ch:'fertilizer',role:'end',
+ lb:'粮食种植',sb:'大田作物刚需',
+ desc:'水稻/小麦/玉米/大豆等大田作物，化肥施用基础场景，春耕秋种两个旺季是化肥行业的核心需求节点。'},
+
+// ── 磷化工链 phospho ──────────────────────────────
+{id:'yellow_p',    ch:'phospho',role:'mid',
+ lb:'黄磷',sb:'磷矿石电炉还原',
+ desc:'磷矿石+焦炭+硅石电弧炉高温还原，是热法磷酸/精细磷酸盐/草甘膦/有机磷阻燃剂的核心原料。高耗能品种（单吨电耗约14500度），电价是核心成本。我国严控新增产能，供给端受限。',
+ mn:'黄磷=磷化工高耗能定价锚。\n电价上涨→黄磷成本上升→价格走强。\n黄磷强→热法磷酸/草甘膦跟强。\n硫磺高价时，热法磷酸性价比凸显，反向拉动黄磷需求。'},
+{id:'iron_phosphate',ch:'phospho',also:['newenergy'],role:'mid',
+ lb:'磷酸铁 FePO4',sb:'LFP前驱体',
+ desc:'磷酸（湿法/热法）+铁盐制备，是磷酸铁锂正极材料（LFP）的关键前驱体，与碳酸锂合成LFP。受益于新能源车和储能需求，是磷化工产业链向新能源领域延伸的核心节点。',
+ mn:'磷酸铁是磷化工链的新能源入口。\n新能源车/储能需求爆发→磷酸铁需求旺盛→拉动上游磷矿石/工业级磷酸一铵（工铵）需求。'},
+{id:'trisodium_p',  ch:'phospho',role:'mid',
+ lb:'磷酸盐系列',sb:'工业/食品/洗涤',
+ desc:'包括三聚磷酸钠、六偏磷酸钠、磷酸氢钙等。下游应用多元分散，用于洗涤剂助剂、食品添加剂、工业水处理、饲料添加剂等。'},
+{id:'glyphosate',  ch:'phospho',role:'end',
+ lb:'草甘膦/有机磷农药',sb:'全球最大除草剂',
+ desc:'由黄磷下游的三氯化磷等中间体合成，是全球销量最大的非选择性除草剂。中国是最大生产国和出口国（产能占全球70%以上）。2026年2月，美国将其列为战略物资，凸显其粮食安全属性。',
+ mn:'草甘膦价格受成本（黄磷）与需求（转基因作物、国际粮价）双重驱动。\n美国战略储备需求及全球粮食安全关切，为其价格提供底部支撑。'},
+{id:'p_flame',     ch:'phospho',role:'end',
+ lb:'磷系阻燃剂',sb:'电子/纺织无卤阻燃',
+ desc:'由三氯化磷/三氯氧磷等磷化工中间体衍生的有机磷阻燃剂。用于印刷电路板、纺织品、建材塑料等，是替代传统溴系阻燃剂的环保趋势方向。'},
+
+// ── 农产品链 agri ──────────────────────────────────
+{id:'corn',    ch:'agri',role:'src',anchor:true,fu:true,
+ lb:'玉米',sb:'饲料/工业刚需★DCE',
+ desc:'全球产量最大的谷物之一，中国最大消费粮食，饲料用量约65-70%，工业（淀粉/酒精）约25-30%，是饲料链和化工链双定价锚。',
+ mn:'玉米是饲料链定价之源——\n玉米涨→饲料成本上升→猪肉/禽肉成本提高。\n政策性收储是价格底部的重要支撑。'},
+{id:'soy',     ch:'agri',role:'src',anchor:true,fu:true,
+ lb:'大豆',sb:'油粕双驱★DCE',
+ desc:'中国进口依存度超80%，压榨分离豆粕（饲料蛋白）+豆油，是饲料链和植物油链的双重定价锚。近年来进口来源转向巴西为主(占比超70%)，美豆占比下降。',
+ mn:'大豆=油粕双驱动——\n大豆进口多看巴西/阿根廷天气。\n大豆涨→豆粕/豆油同步走强。\n美豆(CBOT)是国内定价锚，但巴西升贴水影响增强，汇率是折算扰动。\n压榨利润=[豆粕价×0.78]+[豆油价×0.18]-大豆价格-加工费。'},
+{id:'soybean_meal',ch:'agri',role:'fu',fu:true,
+ lb:'豆粕',sb:'饲料蛋白★DCE',
+ desc:'大豆压榨副产，蛋白含量43-46%，是猪/禽饲料最核心的蛋白原料，与大豆价格高度联动。',
+ mn:'豆粕=大豆成本传导。\n大豆强豆粕必强；美豆是风向标，但南美定价权增强。\n猪禽存栏好→饲料需求旺→豆粕走强。'},
+{id:'soyoil',  ch:'agri',role:'fu',fu:true,
+ lb:'豆油',sb:'植物油★DCE',
+ desc:'大豆压榨副产油脂，与棕榈油/菜油互为替代品，同时也是生物柴油的重要原料，油脂三姐妹联动走势。',
+ mn:'油脂三姐妹联动——\n豆油、菜油、棕榈油互为替代，同向波动（竞争替代，非上下游）。\n大豆强则豆油跟强。\n生物柴油需求好（尤其是巴西、印尼政策）→豆油需求增。'},
+{id:'palm_oil',ch:'agri',role:'fu',fu:true,
+ lb:'棕榈油',sb:'植物油★DCE',
+ desc:'印度尼西亚/马来西亚是主产国，全球产量最大的植物油，与豆油/菜油互为替代，温度低时固化是独特属性。',
+ mn:'棕榈油=东南亚产区风向标。\n马来西亚月度库存数据(MPOB)是核心指标。\n冬季低温→棕榈油固化→需求下降→价格承压。\n生物柴油政策（印尼B40/B50计划）驱动需求大变。'},
+{id:'rapeseed_oil',ch:'agri',role:'fu',fu:true,
+ lb:'菜籽油',sb:'植物油★郑商所',
+ desc:'菜籽压榨，中国重要植物油品种，与豆油互为替代，旺季集中在节假日前后，进口菜籽（主要来自加拿大）是国内价格锚，受贸易政策影响显著。',
+ mn:'菜油跟豆油走，偶有政策溢价（中加关系是关键变量）。\n油脂三姐妹联动（竞争替代关系，非上下游）；节假日前备货旺。'},
+{id:'rapemeal', ch:'agri',role:'fu',fu:true,
+ lb:'菜粕',sb:'水产/禽饲料★郑商所',
+ desc:'菜籽压榨副产，蛋白含量约35%，主要用于水产和禽类饲料，与豆粕互为竞争替代。在豆粕价格高企时，饲料配方中替代比例可提升至60-80%。',
+ mn:'菜粕=菜籽成本传导，水产旺季驱动。\n水产养殖旺季(5-9月)菜粕需求旺。\n与豆粕比价是替代逻辑核心（价差超过一定阈值触发配方替代）。'},
+{id:'egg',     ch:'agri',role:'fu',fu:true,
+ lb:'鸡蛋',sb:'禽蛋★DCE',
+ desc:'蛋鸡产业链终端产品，供应受蛋鸡存栏量驱动，季节性明显（中秋节前旺季），是农产品中少有的纯国内定价品种。',
+ mn:'鸡蛋有旺季，中秋节效应最明显。\n中秋前(8-9月)需求旺价格走强。\n蛋鸡存栏量是供给核心变量（有6-7个月传导）。\n玉米+豆粕成本上涨→鸡蛋成本传导。'},
+{id:'live_hog',ch:'agri',role:'fu',fu:true,
+ lb:'生猪',sb:'猪肉周期★DCE',
+ desc:'中国最重要的肉类消费品种，产业链受猪周期驱动（约4年一轮），饲料成本（玉米+豆粕）是利润压缩的核心。能繁母猪存栏是领先10-12个月的供给指标。',
+ mn:'生猪=猪周期逻辑——\n猪周期约4年一轮（能繁母猪存栏是领先指标）。\n春节前(12月-1月)消费旺，价格走强。\n能繁母猪存栏变化→10-12个月后猪价反向变动。'},
+{id:'wheat',   ch:'agri',role:'fu',fu:true,
+ lb:'小麦',sb:'口粮刚需★郑商所',
+ desc:'中国口粮刚需品种，国家实行最低收购价政策，市场波动小，主要用途面粉，偶有饲料替代属性（价格低时）。',
+ mn:'小麦政策底明显——\n最低收购价是价格底部支撑。\n价格低时替代玉米做饲料（价差逻辑）。'},
+{id:'sugar',   ch:'agri',role:'fu',fu:true,
+ lb:'白糖',sb:'食糖★郑商所',
+ desc:'甘蔗或甜菜制糖，中国主产区广西。与国际糖价（ICE 11号）联动，进口政策（配额+关税）是价格保护机制。',
+ mn:'白糖看广西产量和国际糖价——\n巴西产糖季（5-11月）影响全球供给。\n广西甘蔗收割（10月-次年4月）是国内产量核心。'},
+{id:'sunflower_seed',ch:'agri',role:'src',
+ lb:'葵花籽/花生',sb:'油料作物',
+ desc:'葵花籽（压榨葵花籽油）和花生（压榨花生油）是中国重要本土油料，粕类用于饲料，价格随国内农产品供需格局和进口量联动。'},
+{id:'corn_starch', ch:'agri',role:'mid',
+ lb:'玉米淀粉',sb:'湿法磨碎',
+ desc:'玉米湿磨提取，用于食品加工/淀粉糖/变性淀粉/有机酸发酵，是玉米深加工核心产品，随玉米价格紧密联动。'},
+{id:'fish_meal',   ch:'agri',role:'mid',
+ lb:'鱼粉',sb:'水产高蛋白饲料',
+ desc:'鱼类副产品干燥粉碎，蛋白含量60-65%，水产和高档猪禽饲料核心蛋白源，进口依赖高（秘鲁/智利），随厄尔尼诺渔业产量波动。',
+ mn:'鱼粉跟秘鲁渔业配额走。\n厄尔尼诺年→秘鲁鱼减少→鱼粉供给下降→价格走强。\n水产养殖旺季(5-9月)需求集中。'},
+{id:'t_feed',  ch:'agri',role:'end',lb:'饲料加工',sb:'蛋白+能量配方',
+ desc:'豆粕+玉米+添加剂配方，是生猪/禽类/水产养殖成本的核心，饲料行业是农产品链的最大中间需求环节。'},
+{id:'t_livestock',ch:'agri',role:'end',lb:'畜禽水产',sb:'肉类蛋白终端',
+ desc:'生猪/肉鸡/蛋鸡/水产，是豆粕/玉米/菜粕的共同终端，居民蛋白消费升级驱动长期增长。'},
+{id:'t_food',  ch:'agri',role:'end',lb:'食品加工',sb:'面粉/食用油/糖',
+ desc:'小麦→面粉、油料→食用油、甘蔗→白糖，是农产品链的食品工业终端，受居民消费升级驱动。'},
+{id:'biodiesel',   ch:'agri',role:'end',
+ lb:'生物柴油',sb:'废油脂/植物油→脂肪酸甲酯',
+ desc:'以废弃餐厨油脂（UCO）/植物油与甲醇酯交换制得。国内以废油脂为主，受欧盟反倾销税影响（10%-35.6%），2025年出口大幅下滑，行业正转向可持续航空燃料（SAF）生产。'},
+{id:'pla_resin',   ch:'agri',role:'end',
+ lb:'PLA 聚乳酸',sb:'玉米→乳酸→聚乳酸',
+ desc:'玉米淀粉发酵制乳酸→聚乳酸缩聚，生物基可降解塑料，用于餐饮具/包装/医疗缝合线。'},
+
+// ── 有色金属链 metal ──────────────────────────────
+{id:'copper_ore',ch:'metal',role:'src',
+ lb:'铜精矿',sb:'矿山原料TC/RC',
+ desc:'斑岩铜矿开采，选矿制铜精矿（品位25-35%），经冶炼制电解铜。TC/RC（粗炼/精炼费）是矿山与冶炼厂议价的风向标。近年矿端供应趋紧，现货TC一度跌至负值，反映冶炼产能过剩与矿端紧缺的结构性矛盾。',
+ mn:'铜精矿TC是铜产业链信号灯——\n TC高说明矿山供应充足，冶炼盈利好。\nTC低说明矿山供应紧张，冶炼承压。\n智利/秘鲁是主要铜矿产地，天气/罢工影响供给。'},
+{id:'iron_ore',    ch:'ferrous',also:['coal'],role:'src',anchor:true,fu:true,
+ lb:'铁矿石',sb:'炼铁原料定价锚★DCE',
+ desc:'高炉炼铁核心原料（约1.6吨铁矿→1吨生铁），中国进口依存度约70%。澳大利亚/巴西/印度是主要来源，力拓/必和必拓/淡水河谷/FMG四大矿山垄断供给。西芒杜项目投产将优化高品位矿供应格局。',
+ mn:'铁矿石=黑色系最上游锚。\n铁矿涨→生铁→钢材成本上涨（传导链清晰）。\n四大矿山垄断供给（合计占全球60%以上），定价权强。\n钢厂高炉开工率/铁水产量是铁矿即时需求信号。'},
+{id:'scrap_steel',  ch:'ferrous',role:'src',
+ lb:'废钢',sb:'电弧炉绿色原料',
+ desc:'回收废旧钢材破碎处理，用于电弧炉（EAF）炼钢，绿色低碳原料，废钢比例提升是双碳目标重要路径。'},
+{id:'alumina',  ch:'metal',role:'mid',fu:true,
+ lb:'氧化铝',sb:'铝土矿→拜耳法★SHFE',
+ desc:'铝土矿溶解脱硅制得，电解铝的核心原料，1吨电解铝需约2吨氧化铝，中国氧化铝产能全球第一。氧化铝价格受铝土矿成本（几内亚供给）和烧碱价格驱动。',
+ mn:'氧化铝是铝链成本传导节点——\n氧化铝涨→电解铝成本上涨。\n几内亚铝土矿（中国主要进口来源）供给是扰动。'},
+{id:'copper',  ch:'metal',role:'fu',fu:true,anchor:true,
+ lb:'铜',sb:'工业金属之王★SHFE',
+ desc:'全球最重要的工业金属，电力/建筑/制造业核心，与全球经济景气高度同步，有"铜博士"之称，预测经济的信号量。AI数据中心、电网投资、新能源构成铜需求新动能。',
+ mn:'铜博士——经济景气的晴雨表。\n全球制造业PMI走强→铜价走强。\n新能源车/光伏/电网建设是增量驱动。\n美元走弱→铜价上涨（负相关）。'},
+{id:'aluminum',ch:'metal',role:'fu',fu:true,anchor:true,
+ lb:'电解铝',sb:'轻金属★SHFE',
+ desc:'氧化铝电解，最重要的轻金属，建筑/交通/包装核心材料，中国产能全球60%以上，电力成本是核心变量。受"产能天花板"约束，行业利润高度依赖电价。',
+ mn:'电解铝=电力成本+氧化铝成本。\n电价是最核心的生产成本。\n新能源车轻量化是增量驱动。\n供给受双碳政策约束（电解铝产能天花板）。'},
+{id:'zinc',    ch:'metal',role:'fu',fu:true,
+ lb:'锌',sb:'镀锌防腐★SHFE',
+ desc:'主要用于钢铁镀锌防腐（约60%），镀锌板广泛应用于建筑、汽车、基建等领域。国内消费与基建/汽车钢板紧密联动。',
+ mn:'锌跟基建和汽车走——\n基建好→建筑钢材用量增→镀锌需求旺。\n汽车产销好→镀锌板需求旺。'},
+{id:'lead',    ch:'metal',role:'fu',fu:true,
+ lb:'铅',sb:'蓄电池★SHFE',
+ desc:'约85%用于铅酸蓄电池（汽车启停/电动自行车），再生铅占产量约50%。废电瓶价格是再生铅成本核心，企业利润受废电瓶回收周期和价格影响。',
+ mn:'铅价跟电动自行车和汽车走——\n电动自行车换电高峰→废铅回收增→再生铅价格联动。\n废电瓶价格坚挺时，再生铅企业可能亏损。'},
+{id:'nickel',  ch:'metal',role:'fu',fu:true,
+ lb:'镍',sb:'不锈钢/电池★SHFE',
+ desc:'约70%用于不锈钢，约20%用于动力电池（三元正极）。全球镍供应正在从高品位向低品位（NPI/红土镍矿）转移。印尼镍矿RKAB配额政策是供给的核心扰动变量。',
+ mn:'镍两条腿走路——\n不锈钢需求（地产/工业）→镍铁/NPI需求。\n三元电池需求→高品位镍（MHP/精炼镍）需求。\n印尼镍矿政策是最大供给扰动。'},
+{id:'gold',    ch:'metal',role:'fu',fu:true,anchor:true,
+ lb:'黄金',sb:'贵金属★SHFE',
+ desc:'全球最重要的价值储藏和避险资产。2022年后，黄金与实际利率相关性减弱，全球央行购金和去美元化成为新的定价因素。',
+ mn:'黄金三大驱动——\n①美元走弱/美债实际利率下降→金价走强（2022年前主导）。\n②全球避险情绪升→金价走强（地缘/金融危机）。\n③央行购金潮是长期驱动（2022年后新变量）。\n④流动性危机时可能被抛售。'},
+{id:'silver',  ch:'metal',role:'fu',fu:true,
+ lb:'白银',sb:'工业/贵金属双属性★SHFE',
+ desc:'同时具备贵金属（避险）和工业金属（光伏/电子）双重属性。光伏产业快速扩张是近年白银需求的最大增量来源，光伏用银占白银总需求近20%。',
+ mn:'白银=黄金β，光伏加持。\n随黄金走，但弹性更大（涨多跌多）。\n光伏扩产好→银浆需求旺→白银需求增。\n银价上涨直接影响电池片和组件成本。'},
+{id:'manganese',   ch:'ferrous',role:'mid',
+ lb:'锰/硅锰',sb:'炼钢合金化★CZCE',
+ desc:'硅锰（硅+锰）和锰铁（高锰）用于炼钢脱氧合金化，是高强钢和不锈钢的关键元素，郑商所期货品种，南非/加蓬是主产地。'},
+{id:'tin_metal',   ch:'metal',role:'fu',fu:true,
+ lb:'锡',sb:'焊料/镀锡板★SHFE',
+ desc:'锡焊料是电子电路连接材料（用量约50%），镀锡钢板用于食品罐头，电子行业景气是核心需求，缅甸佤邦是重要产地。',
+ mn:'锡跟电子行业景气走。\n手机/电脑/汽车电子好→焊锡需求旺。\n缅甸（全球最大产地）政局是扰动。'},
+{id:'steel_billet', ch:'ferrous',also:['coal'],role:'mid',
+ lb:'钢坯/生铁',sb:'粗钢中间品',
+ desc:'高炉铁水铸造生铁或连铸钢坯，是热轧/螺纹钢的中间品，钢坯贸易量大，是钢材价格的前瞻性参考。'},
+{id:'rebar',       ch:'ferrous',also:['coal'],role:'fu',fu:true,
+ lb:'螺纹钢',sb:'建筑用钢★SHFE',
+ desc:'长材中的建筑配筋钢，用于混凝土配筋。与铁矿石/焦炭构成"煤焦钢"体系。钢厂利润受原料端挤压时可能触发减产负反馈。',
+ mn:'螺纹钢=地产+基建双驱动。\n地产开工旺→螺纹需求旺→价格走强。\n铁矿石+焦炭是双成本核心。\n社会库存是短期风向标——累库压价，去库抬价。'},
+{id:'hot_roll',    ch:'ferrous',role:'fu',fu:true,
+ lb:'热轧卷板 HRC',sb:'板材★SHFE',
+ desc:'钢坯热轧，用于汽车/家电/机械/集装箱，制造业景气是需求核心，与螺纹钢同属黑色系但更偏制造业属性。'},
+{id:'galv_sheet',   ch:'ferrous',role:'end',
+ lb:'镀锌板/冷轧板',sb:'汽车/家电用钢',
+ desc:'热轧卷板冷轧后镀锌，用于汽车/家电/建筑装饰面板，制造业钢材需求集中体现。镀锌管需求与水利、电力管网等基建项目紧密相关。'},
+{id:'silicon_steel',ch:'ferrous',role:'end',
+ lb:'硅钢',sb:'电机/变压器铁芯',
+ desc:'含硅0.5-4.5%的特殊钢，是电机定转子/变压器铁芯的核心材料，新能源车电机和特高压变压器需求是最大增量驱动。'},
+// 硅铁归属修正：炼钢铁合金，归属有色金属/铁合金链
+{id:'silicon_iron', ch:'ferrous',also:['coal'],role:'mid',
+ lb:'硅铁',sb:'炼钢脱氧合金★CZCE',
+ desc:'硅矿石+焦炭电弧炉还原，用于炼钢脱氧/孕育剂/耐热钢合金，高耗能品种，受钢铁产量和电价双重驱动，郑商所期货品种。',
+ mn:'硅铁跟钢铁产量走。\n钢铁好→炼钢脱氧需求增→硅铁走强。\n电力成本（高耗能冶炼）是核心变量。'},
+{id:'t_construction_m',ch:'metal',role:'end',lb:'建筑工程',sb:'铜铝锌需求端',
+ desc:'铜（电线）/铝（型材门窗）/锌（镀锌钢材）共同的终端建筑场景，受地产开工竣工周期驱动。'},
+{id:'t_ev_m',  ch:'metal',role:'end',lb:'新能源汽车',sb:'铜铝镍锂多金属',
+ desc:'电动车单车用铜量是燃油车3倍，用铝量也大幅增加，三元电池还需要镍，是有色金属增量需求的核心驱动。'},
+{id:'t_pv_m',  ch:'metal',role:'end',lb:'光伏电网',sb:'铜铝银需求',
+ desc:'光伏组件银浆需求（占白银总需求近20%）、光伏电站铝边框、输变电铜导线，光伏产业是铜/铝/银三种金属的增量终端。'},
+// ====== 补充有色金属上游矿石节点 ======
+{id:'bauxite', ch:'metal',role:'src', 
+ lb:'铝土矿',sb:'氧化铝原料', 
+ desc:'铝产业链起点的核心矿物，全球主产区为几内亚、澳大利亚。中国高度依赖进口，是生产氧化铝的唯一大宗原料。'},
+
+{id:'zinc_ore', ch:'metal',role:'src', 
+ lb:'锌矿',sb:'锌冶炼原料', 
+ desc:'通常与铅矿伴生，经选矿得到锌精矿，是冶炼锌锭的基础原料。'},
+
+{id:'lead_ore', ch:'metal',role:'src', 
+ lb:'铅矿/废电瓶',sb:'铅的初级与再生源', 
+ desc:'原生铅来自铅矿冶炼；再生铅来自废旧铅酸电瓶回收。目前中国再生铅产量占比已超原生铅。'},
+
+{id:'nickel_ore', ch:'metal',role:'src', 
+ lb:'红土/硫化镍矿',sb:'镍资源起点', 
+ desc:'硫化矿主产纯镍；红土镍矿（主产地印尼）是冶炼镍铁（NPI）和新能源三元前驱体（MHP）的核心增量来源。'},
+
+{id:'tin_ore', ch:'metal',role:'src', 
+ lb:'锡矿',sb:'锡精矿', 
+ desc:'主产地缅甸佤邦、印尼和中国（云南/广西），用于冶炼精锡，受产区环保和出口政策扰动极大。'},
+
+// ====== 补充有色/贵金属下游终端节点 ======
+{id:'t_battery_lead', ch:'metal',also:['newenergy'],role:'end', 
+ lb:'铅酸蓄电池',sb:'铅绝对主力需求', 
+ desc:'消耗了全球约85%的铅，主要用于汽车启停电池、电动自行车动力电池及部分储能基站。'},
+
+{id:'t_jewelry_invest', ch:'metal',role:'end', 
+ lb:'金银首饰与投资',sb:'贵金属终端', 
+ desc:'黄金和白银作为避险资产的核心流向，包含央行储备、金条银币投资以及珠宝首饰消费。'},
+
+// ── 跨链共用补充节点 ──────────────────────────────
+{id:'pet_coke',    ch:'crude_sys',role:'mid',
+ lb:'石油焦',sb:'炼厂副产碳素材料',
+ desc:'原油减压渣油经延迟焦化裂解所得固态碳，分低硫焦（负极/预焙阳极）、中高硫焦（燃料/还原剂）。是电解铝、石墨电极、锂电负极的关键碳原料。'},
+{id:'needle_coke',ch:'crude_sys',also:['newenergy','coal'],role:'mid',
+ lb:'针状焦',sb:'锂电负极/超高功率电极',
+ desc:'优质油浆或煤沥青深度加工，低热膨胀系数、易石墨化、低硫，是超高功率石墨电极和锂电人造石墨负极的核心原料，分油系和煤系两大路线。'},
+{id:'calc_coke',   ch:'crude_sys',role:'mid',
+ lb:'煅烧焦',sb:'石油焦高温脱硫',
+ desc:'石油焦在回转窑1200-1350℃高温煅烧，脱硫脱挥发分，是预焙阳极和石墨电极的主要骨料。'},
+{id:'graphite_elec',ch:'crude_sys',also:['metal'],role:'mid',
+ lb:'石墨电极',sb:'电炉炼钢核心耗材',
+ desc:'针状焦/石油焦+煤沥青经石墨化制成，用于电炉炼钢（占消费85%）/工业硅冶炼/黄磷，超高功率型单支消耗量大，是低碳炼钢的关键耗材。'},
+{id:'prebake_anode',ch:'crude_sys',also:['metal'],role:'mid',
+ lb:'预焙阳极',sb:'电解铝消耗性电极',
+ desc:'煅烧石油焦+煤沥青焙烧制成，每生产1吨电解铝需消耗约0.5吨预焙阳极，产量与电解铝高度联动。'},
+{id:'anode_graphite',ch:'crude_sys',also:['newenergy'],role:'end',
+ lb:'人造石墨负极',sb:'锂电负极主流材料',
+ desc:'针状焦或低硫石油焦经高温石墨化制成，是锂电池负极材料主流（占比约80%），用于动力/储能电池。'},
+{id:'nat_graphite_neg',ch:'newenergy',role:'end',
+ lb:'天然石墨负极',sb:'天然石墨球化加工',
+ desc:'天然鳞片石墨球化、包覆、石墨化处理，成本低于人造石墨，用于低速电动车/两轮车/中端电池。'},
+{id:'coal_pitch',  ch:'coal',role:'mid',
+ lb:'煤沥青',sb:'焦化重质组分/碳素黏结剂',
+ desc:'煤焦油蒸馏后的重质组分，主要用途：①石墨电极/预焙阳极黏结剂；②改性沥青防水卷材；③碳素制品；④针状焦煤系原料。'},
+{id:'paraffin',    ch:'crude_sys',role:'mid',
+ lb:'石蜡',sb:'润滑油精制副产',
+ desc:'原油润滑油馏分脱蜡工艺副产，下游广泛用于蜡烛/包装纸/橡胶/化妆品/食品防水/PVC加工助剂。'},
+{id:'base_oil',    ch:'crude_sys',role:'mid',
+ lb:'基础油',sb:'润滑油基础原料',
+ desc:'原油减压馏分加氢精制，分Ⅰ/Ⅱ/Ⅲ类，是润滑油的核心基料，国内高等级基础油供给不足、进口依赖高。'},
+{id:'lube_oil',    ch:'crude_sys',role:'end',
+ lb:'润滑油',sb:'发动机/齿轮/液压',
+ desc:'基础油+添加剂调配，中国是全球最大润滑油消费国，汽车保有量增长驱动。'},
+{id:'mtbe',        ch:'polyolefin',role:'mid',
+ lb:'MTBE',sb:'汽油含氧调和组分',
+ desc:'甲醇+异丁烯醚化，提高汽油辛烷值和含氧量，是成品汽油的调和组分。最终与其他馏分调和为成品汽油。'},
+// 芳烃化工补充
+{id:'acetone',     ch:'aromatic',role:'mid',
+ lb:'丙酮',sb:'苯酚异丙苯法联产',
+ desc:'苯酚生产（异丙苯法）的联产品，是MMA/MIBK/双酚A/有机溶剂的原料，与苯酚价格高度绑定（固定比例联产）。'},
+{id:'cyclohexanone',ch:'aromatic',role:'mid',
+ lb:'环己酮',sb:'苯加氢→氧化',
+ desc:'苯加氢制环己烷→氧化制环己酮，是己内酰胺（尼龙6路线）和己二酸（尼龙66路线）的核心前体。'},
+{id:'isopropylbenz',ch:'aromatic',role:'mid',
+ lb:'异丙苯',sb:'苯+丙烯烃化',
+ desc:'苯与丙烯催化烃化，几乎100%用于苯酚/丙酮联产，是苯酚生产的核心中间体。'},
+{id:'mma',         ch:'aromatic',role:'mid',
+ lb:'MMA 甲基丙烯酸甲酯',sb:'有机玻璃单体',
+ desc:'丙酮氰醇法（ACH法）或异丁烯法，是PMMA（有机玻璃）聚合单体，也用于涂料/光学膜/牙科材料。'},
+{id:'phthalic_anhy',ch:'aromatic',also:['coal'],role:'mid',
+ lb:'苯酐 PA',sb:'邻二甲苯/萘氧化',
+ desc:'邻二甲苯催化氧化（主流）或萘氧化，主要用于DOP/DINP增塑剂（PVC软化）和不饱和聚酯树脂。'},
+// DOP 修正：增塑剂是PVC制品加工时的添加剂，不是PVC树脂的合成原料
+// 应指向PVC管材/制品而非pvc节点
+{id:'dop_plasticizer',ch:'aromatic',role:'mid',
+ lb:'DOP/DOTP增塑剂',sb:'苯酐+辛醇→PVC加工助剂',
+ desc:'苯酐+辛醇（DOP）或对苯二甲酸+辛醇（DOTP，更环保），是PVC树脂加工成制品时的功能性添加剂（混合进去软化），不是VCM的原料，应指向PVC管材/软制品。'},
+{id:'o_xylene',    ch:'aromatic',role:'mid',
+ lb:'邻二甲苯',sb:'苯酐原料',
+ desc:'混合二甲苯低温分馏所得，90%以上氧化制苯酐，苯酐→DOP增塑剂，价格随苯酐需求和混合二甲苯产量联动。'},
+{id:'maleic_anhy',  ch:'aromatic',also:['coal'],role:'mid',
+ lb:'顺酐 MA',sb:'正丁烷/苯氧化',
+ desc:'正丁烷（丁烷法）或苯催化氧化，下游：不饱和聚酯树脂（玻璃钢）/BDO（→PTMEG/氨纶）/马来酸类农药。'},
+{id:'phenol_formaldehyde',ch:'aromatic',role:'mid',
+ lb:'酚醛树脂',sb:'苯酚+甲醛缩合',
+ desc:'苯酚与甲醛在酸/碱催化下缩聚，是最古老的合成树脂，用于胶合板粘合剂（建材）/铸造砂型/摩擦材料。'},
+{id:'neopentyl_glycol',ch:'aromatic',role:'mid',
+ lb:'新戊二醇 NPG',sb:'不饱和树脂/粉末涂料',
+ desc:'异丁醛与甲醛缩合加氢，用于不饱和聚酯树脂/粉末涂料/合成润滑剂，风电叶片（复合材料树脂）是重要增量需求场景。'},
+{id:'pc_resin',    ch:'aromatic',role:'mid',
+ lb:'聚碳酸酯 PC',sb:'双酚A缩聚',
+ desc:'双酚A与光气（或DMC非光气法）缩聚，高透明/高强度工程塑料，电子光学/汽车/建筑幕墙，5G和新能源车是增量驱动。'},
+{id:'pmma_resin',  ch:'aromatic',role:'mid',
+ lb:'PMMA 有机玻璃',sb:'MMA聚合',
+ desc:'甲基丙烯酸甲酯（MMA）聚合，光学透明度极佳，用于显示屏导光板/汽车尾灯/广告牌。'},
+// 聚苯乙烯 修正归属：属芳烃链（苯乙烯→PS），不属聚烯烃链
+{id:'ps_resin',    ch:'aromatic',role:'mid',
+ lb:'聚苯乙烯 PS/EPS',sb:'苯乙烯聚合（芳烃链）',
+ desc:'苯乙烯均聚（GPPS透明）/发泡（EPS保温板）/抗冲改性（HIPS），原料是苯乙烯，属芳烃链，与乙烯/丙烯聚烯烃无关。包装/保温/家电/餐饮具广泛使用。'},
+{id:'alkyd_resin',  ch:'aromatic',role:'mid',
+ lb:'醇酸树脂',sb:'溶剂型涂料成膜剂',
+ desc:'多元醇+多元酸+脂肪酸缩聚，传统溶剂型涂料的核心成膜剂，属合成树脂层，需配制涂料后流向终端。'},
+{id:'abs_resin',   ch:'aromatic',role:'mid',
+ lb:'ABS树脂',sb:'苯乙烯/丙烯腈/丁二烯',
+ desc:'三元共聚工程塑料，兼具苯乙烯（透明）/丙烯腈（化学稳定）/丁二烯（韧性），用于家电外壳/汽车内饰/3C产品。'},
+{id:'adipic_acid2', ch:'aromatic',also:['coal'],role:'mid',
+ lb:'己二酸',sb:'尼龙66/聚酯多元醇',
+ desc:'环己烷或苯硝酸氧化制备，是聚酰胺66（PA66）和聚氨酯聚酯多元醇的重要原料，汽车工程塑料是核心驱动场景。'},
+// 甘氨酸 修正归属：最简单脂肪族氨基酸，无苯环，属磷化工/农化链
+{id:'glycine',     ch:'coal',also:['phospho'],role:'end',
+ lb:'甘氨酸',sb:'草甘膦中间体（磷化工）',
+ desc:'氨基乙酸，无苯环，属脂肪族氨基酸而非芳烃，原料来自氯乙酸和氨水或氢氰酸路线。是草甘膦（甘氨酸路线除草剂）的核心中间体，归属磷化工/农化链。'},
+// 活性染料 修正归属：属芳烃精细化工，不属纸浆链
+{id:'reactive_dye', ch:'aromatic',role:'end',
+ lb:'活性染料',sb:'棉/粘胶染色辅料（芳烃精细化工）',
+ desc:'与纤维形成共价键的染料，来自苯胺/芳香化合物，专用于棉/粘胶/亚麻着色，属芳烃精细化工链，不属纸浆链。中国全球第一，随棉纺织出口旺季需求联动。'},
+{id:'disperse_dye', ch:'aromatic',role:'end',
+ lb:'分散染料',sb:'涤纶染色辅料（精细化工）',
+ desc:'非离子型染料，来自煤焦油/苯胺等芳烃衍生物，专用于涤纶着色，中国产量占全球约70%（浙江上虞/江苏），环保督查是最大供给扰动。'},
+// 煤化工链补充
+{id:'formaldehyde', ch:'coal',role:'mid',
+ lb:'甲醛',sb:'甲醇氧化（煤化工链）',
+ desc:'甲醇催化氧化，原料是甲醇（煤化工链产品）。主用于脲醛/酚醛树脂（胶合板/刨花板黏合剂）/MDI（甲醛路线）/多聚甲醛，地产竣工（板材消费）是核心驱动。'},
+{id:'acetic_acid', ch:'coal',also:['polyolefin'],role:'mid',
+ lb:'冰醋酸',sb:'甲醇羰基化（煤化工链）',
+ desc:'甲醇+CO催化羰基化（孟山都工艺），原料是甲醇，属甲醇/醋酸产业链。下游：醋酸乙酯/醋酸丁酯（溶剂）/醋酸乙烯（VAM）/醋酐。'},
+{id:'ethyl_acetate',ch:'coal',role:'mid',
+ lb:'醋酸乙酯 EA',sb:'溶剂（醋酸链下游）',
+ desc:'冰醋酸+乙醇酯化，属甲醇→醋酸→酯类的煤化工延伸链，是食品/涂料/印刷油墨/胶粘剂的重要溶剂。'},
+{id:'vinyl_acetate',ch:'polyolefin',also:['coal'],role:'mid',
+ lb:'醋酸乙烯 VAM',sb:'乙烯+醋酸氧化',
+ desc:'乙烯与醋酸在钯催化下氧化，原料是乙烯（聚烯烃链）+冰醋酸（煤化工链），属乙烯-醋酸跨链产品。聚合制PVA/VAE乳液。'},
+{id:'pvoh',        ch:'polyolefin',also:['coal'],role:'mid',
+ lb:'聚乙烯醇 PVA',sb:'VAM聚合水解',
+ desc:'醋酸乙烯聚合后醇解，原料链是乙烯→VAM→PVA。用于纺织上浆/胶膜/维尼纶纤维。'},
+{id:'acrylic_acid', ch:'polyolefin',role:'mid',
+ lb:'丙烯酸',sb:'丙烯氧化（碳三链）',
+ desc:'丙烯催化氧化两步法，原料是丙烯，属聚烯烃/碳三产业链。下游：丙烯酸丁酯（建筑涂料）/高吸水性树脂（卫生材料）/乳液。'},
+{id:'acrylonitrile',ch:'polyolefin',also:['rubber'],role:'mid',
+ lb:'丙烯腈 AN',sb:'丙烯氨氧化→三用途',
+ desc:'丙烯+氨+空气索海德华工艺，原料是丙烯，属聚烯烃/碳三产业链。三大下游：ABS树脂/腈纶纤维/丁腈橡胶（NBR）。'},
+{id:'epoxy_propane',ch:'polyolefin',role:'mid',
+ lb:'环氧丙烷 PO',sb:'丙烯氯醇/HPPO法（碳三链）',
+ desc:'丙烯氯醇法或HPPO（双氧水环氧化）法，原料是丙烯，属碳三/聚烯烃产业链。主下游：聚醚多元醇（聚氨酯）/丙二醇。'},
+{id:'polyether_polyol',ch:'polyolefin',role:'mid',
+ lb:'聚醚多元醇',sb:'PO开环聚合（碳三链）',
+ desc:'环氧丙烷（PO）开环聚合，分软泡聚醚（沙发床垫）和硬泡聚醚（建筑保温/冰箱），与MDI/TDI共同构成聚氨酯材料核心原料体系。'},
+{id:'eva_resin',   ch:'polyolefin',role:'mid',
+ lb:'EVA',sb:'乙烯+醋酸乙烯共聚',
+ desc:'乙烯与醋酸乙烯高压共聚，光伏封装膜（VA含量33%）/发泡鞋材（VA含量18%）/热熔胶，光伏产业是近年最大增量驱动。',
+ mn:'EVA两条腿：光伏封装+发泡鞋材。\n光伏新增装机量是光伏EVA需求核心。\nEVA-乙烯价差=加工利润核心指标。'},
+{id:'poe_resin',   ch:'polyolefin',role:'mid',
+ lb:'POE 聚烯烃弹性体',sb:'光伏胶膜/弹性体',
+ desc:'乙烯与辛烯茂金属催化共聚，光伏胶膜增效剂（替代EVA或共混）/汽车密封件，中国长期依赖进口，国产化是关键突破。'},
+{id:'bopp_film',   ch:'polyolefin',role:'mid',
+ lb:'BOPP薄膜',sb:'PP双向拉伸制品',
+ desc:'PP双向拉伸薄膜，用于食品包装袋/香烟包装/标签/胶带，随PP原料价格联动，食品包装旺季季节性明显。'},
+{id:'carbon_fiber', ch:'polyolefin',role:'end',
+ lb:'碳纤维',sb:'PAN基碳化（丙烯腈→聚丙烯腈）',
+ desc:'聚丙烯腈（PAN基，占95%）原丝高温碳化，原料链是丙烯→丙烯腈→PAN→碳纤维，属聚烯烃/碳三产业链延伸。轻质高强度材料，用于航空航天/风电叶片/高端运动器材。'},
+{id:'spandex_fiber',ch:'coal',role:'end',
+ lb:'氨纶',sb:'PTMEG+MDI聚合纺丝',
+ desc:'PTMEG与MDI聚合制PU弹性纤维，伸长率400-800%，运动服/泳衣/袜子/弹力牛仔核心材料，中国产能占全球约75%。'},
+{id:'acrylic_fiber',ch:'polyolefin',role:'end',
+ lb:'腈纶',sb:'丙烯腈湿法纺丝（碳三链）',
+ desc:'丙烯腈聚合（PAN）湿法纺丝，原料链是丙烯→丙烯腈→腈纶，属聚烯烃/碳三产业链。蓬松感似羊毛，用于毛毯/针织品/户外面料。'},
+{id:'pa6_fiber',   ch:'aromatic',role:'end',
+ lb:'锦纶PA6/PA66纤维',sb:'己内酰胺/己二酸→聚酰胺',
+ desc:'己内酰胺→PA6和己二酸/己二胺→PA66，属聚酰胺（尼龙）化学体系，原料链走苯→己内酰胺/己二酸路线（芳烃链）。弹性好/耐磨/吸湿，用于丝袜/运动服/汽车帘子布。'},
+// 锂电补充
+{id:'electrolyte', ch:'newenergy',role:'mid',
+ lb:'电解液',sb:'锂离子传导介质',
+ desc:'六氟磷酸锂（LiPF₆）+碳酸酯溶剂（EC/DMC/EMC）+添加剂（VC/FEC），锂电池离子传导的核心介质，随电池装机量直接联动。'},
+{id:'lpf6',        ch:'newenergy',role:'mid',
+ lb:'六氟磷酸锂 LiPF6',sb:'电解质核心盐',
+ desc:'氟化锂+五氯化磷氟化制备，电解液最核心的锂盐，价格弹性极大（锂电扩产期由10万元/吨跌至1万元/吨）。'},
+{id:'separator',   ch:'newenergy',role:'mid',
+ lb:'锂电隔膜',sb:'安全屏障/PE-PP膜',
+ desc:'PE/PP微多孔膜，分干法（拉伸法）和湿法（萃取法），阻隔正负极防短路，安全性核心材料。'},
+{id:'copper_foil2',ch:'newenergy',also:['metal'],role:'mid',
+ lb:'铜箔',sb:'负极集流体',
+ desc:'电解铜箔（8-12μm超薄），锂电负极集流体，每GWh电池约需600-700吨铜箔，随动力电池产能联动。'},
+{id:'alu_foil',    ch:'newenergy',also:['metal'],role:'mid',
+ lb:'铝箔',sb:'正极集流体/包装',
+ desc:'轧制铝箔（12-20μm），锂电正极集流体，同时大量用于食品包装/药品包装。'},
+{id:'nmp2',        ch:'coal',also:['newenergy'],role:'mid',
+ lb:'NMP',sb:'锂电极片溶剂',
+ desc:'N-甲基吡咯烷酮（BDO→GBL→NMP路线），锂电正极浆料涂布核心溶剂，随锂电装机量直接联动，需回收循环利用降成本。'},
+{id:'pvdf',        ch:'newenergy',also:['chlor'],role:'mid',
+ lb:'PVDF',sb:'锂电粘结剂/氟树脂',
+ desc:'偏氟乙烯聚合，锂电正极粘结剂（高纯锂电级）和氟树脂（工业/建筑涂料）双重属性。'},
+{id:'dmc',         ch:'coal',also:['newenergy'],role:'mid',
+ lb:'碳酸二甲酯 DMC',sb:'锂电溶剂/环保化工（煤化工链）',
+ desc:'甲醇+CO₂草酸酯路线或光气法，原料是甲醇，属甲醇/煤化工产业链。锂电电解液溶剂（EC/DMC/EMC体系），锂电是最大增量驱动。'},
+// 氟化工链
+{id:'fluorite',ch:'chlor',also:['newenergy'],role:'src',
+ lb:'萤石 CaF₂',sb:'氟化工基础矿物',
+ desc:'氟元素的主要矿物来源，品位分为冶金级（65%）/酸级（97%+），酸级萤石与硫酸反应制无水氟化氢（HF），是制冷剂/含氟树脂/六氟磷酸锂的上游定价锚。中国是全球最大萤石储量和产量国。'},
+{id:'anhy_hf',ch:'chlor',also:['newenergy'],role:'mid',
+ lb:'无水氟化氢 HF',sb:'氟化工核心中间体',
+ desc:'萤石与浓硫酸反应制得，是制冷剂（R22/R32/R410a）/PVDF/六氟磷酸锂（LiPF6）/PTFE等含氟产品的共同前体。'},
+{id:'ptfe_resin',ch:'chlor',also:['newenergy'],role:'end',
+ lb:'聚四氟乙烯 PTFE',sb:'特氟龙/不粘涂层',
+ desc:'四氟乙烯聚合，耐高温(-200℃~+260℃)/耐化学腐蚀性最强的工程塑料，用于不粘锅涂层/化工管道密封/电线绝缘。'},
+{id:'refrigerant',  ch:'chlor',also:['newenergy'],role:'end',
+ lb:'制冷剂 R22/R32/R410a',sb:'空调制冷工质',
+ desc:'R22（HCFC）受环保配额约束，R32/R410a（HFC）是当前主流，趋势向R290（丙烷）/低GWP工质过渡，空调产量是需求核心。'},
+{id:'organic_silicon_dmc',ch:'newenergy',also:['chlor'],role:'mid',
+ lb:'有机硅DMC/D4',sb:'甲基氯硅烷水解',
+ desc:'工业硅与氯甲烷反应→二甲基二氯硅烷→水解→DMC（四甲基环四硅氧烷）等环体，是硅油/硅橡胶/硅树脂的基础聚合单体。'},
+// 无机化工补充
+{id:'glass_fiber',  ch:'chlor',also:['newenergy'],role:'end',
+ lb:'玻璃纤维',sb:'风电/建材复合材料',
+ desc:'石灰石+石英砂+纯碱熔融拉丝，风电叶片/建筑复合材料/汽车轻量化的基础增强材料，风电装机量是最大驱动因素。'},
+{id:'titanium_dio', ch:'chlor',role:'end',
+ lb:'钛白粉',sb:'涂料/塑料白色颜料',
+ desc:'钛铁矿硫酸法或氯化钛白法，最重要的白色颜料，涂料用量占60%/塑料占20%，地产装修竣工旺季带动需求。'},
+{id:'hydrogen_perox',ch:'chlor',role:'end',
+ lb:'双氧水 H₂O₂',sb:'绿色氧化漂白',
+ desc:'蒽醌法制备，用于纸浆漂白/纺织漂白/半导体清洗/采矿，是绿色氧化剂。'},
+{id:'carbon_black',ch:'coal',also:['rubber'],role:'mid',
+ lb:'炭黑',sb:'煤焦油/蒽油不完全燃烧',
+ desc:'国内炭黑主归属煤化工链：原料为煤焦油（49%）+蒽油（34%），两者均为焦化副产，合计占比超80%。煤焦油约占炭黑营业成本80%。下游橡胶轮胎占炭黑用量约67%。',
+ mn:'炭黑主看煤焦油，不看原油。\n煤焦油占成本约80%，是最核心成本驱动。\n轮胎产量是最大需求驱动（占用量约67%）。'},
+{id:'sbs_rubber',  ch:'rubber',role:'mid',
+ lb:'SBS/SIS热塑性弹性体',sb:'苯乙烯-丁二烯嵌段共聚',
+ desc:'苯乙烯-丁二烯-苯乙烯三嵌段共聚，用于鞋底（SIS）/改性沥青防水卷材/胶粘剂，改性沥青是最大需求。'},
+{id:'lng',         ch:'coal',also:['fertilizer'],role:'src',
+ lb:'液化天然气 LNG',sb:'清洁能源进口（天然气体系）',
+ desc:'天然气低温液化（-162℃），海运进口主形式，中国是全球最大LNG进口国。LNG属天然气化工体系，下游是合成氨/甲醇/化肥（天然气制氢路线）。'},
+{id:'thf',         ch:'coal',role:'mid',
+ lb:'四氢呋喃 THF',sb:'BDO脱水',
+ desc:'BDO催化脱水，是PTMEG的聚合单体（开环聚合），也是重要的非质子溶剂，用于PVC/聚氨酯/医药合成。'},
+{id:'gbl',         ch:'coal',role:'mid',
+ lb:'γ-丁内酯 GBL',sb:'BDO氧化',
+ desc:'BDO氧化脱氢，用于NMP前体/医药（安定类）/锂电溶剂添加剂/香料，与NMP同属BDO产业链下游。'},
+{id:'petcoke_fuel',ch:'crude_sys',role:'end',
+ lb:'石油焦燃料',sb:'电厂/水泥燃料',
+ desc:'中高硫石油焦（硫含量>3%）热值约8500大卡/千克，作为廉价燃料用于水泥/电厂/钢铁烧结，炼厂副产的主要消化渠道。'},
+{id:'alkylate_oil',ch:'crude_sys',role:'mid',
+ lb:'烷基化油',sb:'高辛烷值汽油调和组分',
+ desc:'C4烯烃与异丁烷在酸催化下烷基化，是优质清洁汽油调和组分（无芳烃/无烯烃），随C4和汽油价格联动。'},
+{id:'ammonium_sulfate',ch:'coal',also:['fertilizer'],role:'end',
+ lb:'硫酸铵',sb:'焦化副产氮肥',
+ desc:'炼焦副产（焦炉气中氨+硫酸中和），也是己内酰胺生产的副产，含氮21%，用于农业氮肥和工业。'},
+{id:'melamine',    ch:'coal',also:['fertilizer'],role:'end',
+ lb:'三聚氰胺',sb:'尿素高温重排',
+ desc:'尿素高温催化分解重排，用于三聚氰胺甲醛树脂（密胺餐具/建材装饰板/涂料），随尿素价格联动。'},
+{id:'tpu_resin',   ch:'coal',role:'end',
+ lb:'TPU热塑聚氨酯',sb:'耐磨弹性材料',
+ desc:'MDI/TDI与长链多元醇（聚酯/聚醚）合成，耐磨性最佳弹性材料，用于鞋面/户外运动/汽车内饰/医疗导管。'},
+{id:'dimethyl_ether',ch:'coal',role:'end',
+ lb:'二甲醚',sb:'甲醇脱水清洁燃料',
+ desc:'甲醇脱水，是LPG替代燃料和气雾剂推进剂，随甲醇价格联动，中国产能过剩，国内需求饱和。'},
+{id:'hydrogen',    ch:'newenergy',role:'end',
+ lb:'氢气',sb:'工业/绿氢',
+ desc:'灰氢（煤/天然气制氢）/绿氢（电解水），工业用途广泛（合成氨/石化加氢），燃料电池是增量应用。'},
+];
+
+let LINKS=[
+// ── type:'flow' = 物质流（参与DAG），type:'sub' = 替代关系（同层虚线，不参与拓扑）
+// 原油系（原油直接→各炼制产品）
+{s:'crude',t:'naphtha',lb:'常压蒸馏→石脑油'},{s:'crude',t:'lpg',lb:'蒸馏/FCC副产LPG'},
+{s:'crude',t:'diesel',lb:'常压蒸馏→馏分'},{s:'crude',t:'residue',lb:'减压蒸馏→渣油'},
+{s:'residue',t:'hsfo',lb:'调和'},{s:'residue',t:'bitumen',lb:'→沥青'},{s:'residue',t:'lsfo',lb:'加氢脱硫'},
+{s:'hsfo',t:'lsfo',lb:'HSDS脱硫'},{s:'diesel',t:'t_avia',lb:'→航煤Jet A-1'},
+{s:'lsfo',t:'t_ship',lb:'远洋合规燃料'},{s:'hsfo',t:'t_power',lb:'电厂燃料'},
+{s:'bitumen',t:'t_road',lb:'道路铺装'},{s:'bitumen',t:'t_const',lb:'防水卷材'},
+{s:'lpg',t:'t_cook',lb:'民用燃气'},{s:'lpg',t:'t_power',lb:'工业燃料'},
+{s:'naphtha',t:'t_gasoline',lb:'重整汽油→汽油池调和'},
+
+// 聚烯烃
+{s:'naphtha',t:'ethylene',lb:'蒸汽裂解'},
+{s:'naphtha',t:'reformate',lb:'催化重整'},{s:'naphtha',t:'crk_gas',lb:'裂解副产'},
+{s:'natgas',t:'lpg',lb:'天然气加工'},{s:'lpg',t:'ethylene',lb:'蒸汽裂解'},
+{s:'lpg',t:'propylene',lb:'丙烷脱氢PDH'},
+{s:'coal_po',t:'ethylene',lb:'MTO制乙烯'},{s:'coal_po',t:'propylene',lb:'MTP制丙烯'},
+{s:'ethylene',t:'pe',lb:'聚合'},{s:'ethylene',t:'eox',lb:'银催化氧化'},
+{s:'ethylene',t:'vcm',lb:'乙烯法'},{s:'ethylene',t:'styrene',lb:'烃化+脱氢'},
+{s:'ethylene',t:'c4frac',lb:'裂解C4副产'},{s:'propylene',t:'pp',lb:'聚合'},
+{s:'propylene',t:'phenol',lb:'→异丙苯→苯酚'},{s:'eox',t:'eg',lb:'水合'},
+{s:'vcm',t:'pvc',lb:'聚合'},{s:'chlorine',t:'vcm',lb:'氯化（电石/乙烯法）'},
+{s:'c4frac',t:'butadiene',lb:'萃取分离'},{s:'pe',t:'t_pack',lb:'薄膜/袋'},
+{s:'pe',t:'t_pipe',lb:'PE管材'},{s:'pe',t:'t_agri',lb:'农用地膜'},
+{s:'pp',t:'t_pack',lb:'编织袋/包装'},{s:'pp',t:'t_auto',lb:'汽车零部件'},
+{s:'pp',t:'t_appl',lb:'家电配件'},{s:'pvc',t:'t_pipe',lb:'PVC管材型材'},
+{s:'pvc',t:'t_const',lb:'门窗地板电缆'},
+// DOP增塑剂修正：指向PVC制品（管材/软制品），不指向pvc树脂节点
+{s:'dop_plasticizer',t:'t_pipe',lb:'PVC软制品增塑剂'},
+{s:'dop_plasticizer',t:'t_const',lb:'PVC软制品加工助剂'},
+
+// 芳烃
+{s:'reformate',t:'btx',lb:'芳烃抽提'},{s:'crk_gas',t:'btx',lb:'加氢芳烃抽提'},
+{s:'crude_bz',t:'btx',lb:'粗苯→芳烃'},{s:'btx',t:'benzene',lb:'精馏分离'},
+{s:'btx',t:'toluene',lb:'精馏分离'},{s:'btx',t:'mxylene',lb:'精馏分离'},
+{s:'toluene',t:'benzene',lb:'歧化'},{s:'toluene',t:'mxylene',lb:'歧化补充'},
+// TDI修正：补齐甲苯→TDI直接路线
+{s:'toluene',t:'mdi_tdi',lb:'甲苯路线→TDI'},
+{s:'mxylene',t:'px',lb:'吸附分离/异构化'},{s:'benzene',t:'ethylbz',lb:'与乙烯烃化'},
+{s:'ethylbz',t:'styrene',lb:'脱氢'},{s:'benzene',t:'aniline',lb:'硝化→加氢'},
+{s:'benzene',t:'phenol',lb:'异丙苯法'},{s:'benzene',t:'capro',lb:'→环己酮→重排'},
+{s:'phenol',t:'bpa',lb:'与丙酮缩合'},{s:'aniline',t:'mdi_tdi',lb:'+甲醛→MDI'},
+// 芳烃树脂层→终端行业
+{s:'bpa',t:'t_ep',lb:'双酚A+环氧氯丙烷'},{s:'bpa',t:'pc_resin',lb:'→聚碳酸酯PC'},
+{s:'t_ep',t:'t_pcb',lb:'固化成型→电路板'},{s:'t_ep',t:'t_wind_blade',lb:'风电叶片'},
+{s:'t_ep',t:'t_coating',lb:'防腐涂料'},
+{s:'pc_resin',t:'t_appl',lb:'家电/电子外壳'},{s:'pc_resin',t:'t_auto',lb:'汽车灯罩/仪表盘'},
+{s:'mdi_tdi',t:'t_pu',lb:'聚氨酯原料'},
+{s:'t_pu',t:'t_auto',lb:'汽车坐垫/保温'},{s:'t_pu',t:'t_const',lb:'建筑保温泡沫'},
+{s:'styrene',t:'t_appl',lb:'→PS/ABS壳体'},
+// PS修正：归属芳烃链，苯乙烯聚合
+{s:'styrene',t:'ps_resin',lb:'均聚/发泡→PS'},
+{s:'ps_resin',t:'t_appl',lb:'PS/EPS家电包装'},
+{s:'ps_resin',t:'t_pack',lb:'EPS/GPPS包装容器'},
+{s:'t_nylon',t:'t_auto',lb:'汽车零件/工程塑料'},{s:'t_nylon',t:'t_fiber_ind',lb:'尼龙纤维/帘子布'},
+{s:'capro',t:'t_nylon',lb:'聚合→PA6树脂'},
+{s:'alkyd_resin',t:'t_coating',lb:'溶剂型涂料'},
+
+// 聚酯
+{s:'px',t:'pta',lb:'对二甲苯氧化'},{s:'pta',t:'pet_chip',lb:'与EG酯化缩聚'},
+{s:'eg',t:'pet_chip',lb:'与PTA酯化缩聚'},{s:'pet_chip',t:'filament',lb:'熔融纺丝'},
+{s:'pet_chip',t:'sfib',lb:'纺短纤'},{s:'pet_chip',t:'bottle',lb:'固相增粘→瓶片'},
+{s:'pet_chip',t:'pet_film',lb:'双向拉伸BOPET'},{s:'filament',t:'t_text',lb:'纺织面料'},
+{s:'sfib',t:'t_text',lb:'混纺面料'},{s:'bottle',t:'t_drink',lb:'饮料/矿泉水瓶'},
+{s:'pet_film',t:'t_pv',lb:'光伏背板'},
+// PBAT修正：三大原料 PTA+己二酸+BDO
+{s:'pta',t:'pbat_resin',lb:'PTA（芳香族成分）'},
+{s:'adipic_acid2',t:'pbat_resin',lb:'己二酸（脂肪族成分）'},
+{s:'bdo',t:'pbat_resin',lb:'BDO（共聚单体）'},
+{s:'pbat_resin',t:'t_pack',lb:'降解购物袋/快递袋'},
+{s:'pbat_resin',t:'t_agri',lb:'全降解农膜'},
+
+// 氯碱
+{s:'salt',t:'brine',lb:'溶解精制'},{s:'limestone',t:'soda',lb:'氨碱法原料'},
+{s:'salt',t:'soda',lb:'制碱原料'},{s:'sio2',t:'flat_gl',lb:'玻璃主体原料'},
+{s:'brine',t:'caustic',lb:'离子膜电解（三联产）'},{s:'brine',t:'chlorine',lb:'离子膜电解（三联产）'},
+{s:'brine',t:'chlor_h2',lb:'离子膜电解（三联产）'},
+// 氯气→EDC→VCM→PVC 标准乙烯法路径
+{s:'chlorine',t:'edc',lb:'乙烯直接氯化/氧氯化'},
+{s:'ethylene',t:'edc',lb:'乙烯参与氯化'},
+{s:'edc',t:'vcm',lb:'热裂解脱HCl'},
+// 氯碱联产氢气用途
+{s:'chlor_h2',t:'hcl_gas',lb:'H₂+Cl₂合成HCl'},
+{s:'chlor_h2',t:'aniline',lb:'硝基苯加氢还原'},
+// ecpx修正：丙烯+氯气双原料
+{s:'propylene',t:'ecpx',lb:'丙烯氯醇化'},
+{s:'chlorine',t:'ecpx',lb:'氯气参与反应'},
+{s:'ecpx',t:'t_ep',lb:'→环氧树脂'},
+{s:'soda',t:'flat_gl',lb:'玻璃核心助熔剂'},{s:'limestone',t:'flat_gl',lb:'熔制原料'},{s:'flat_gl',t:'t_const',lb:'建筑门窗幕墙'},
+{s:'flat_gl',t:'t_auto',lb:'汽车玻璃'},{s:'flat_gl',t:'t_pv',lb:'光伏组件盖板'},
+{s:'caustic',t:'t_const',lb:'造纸铝工业'},{s:'caustic',t:'t_paper_i',lb:'造纸漂白制浆'},
+// 碳酸钙修正：是PVC制品加工填充剂，不是PVC树脂合成原料
+// limestone→calcium_carb→t_pipe (填充PVC管材制品)
+{s:'limestone',t:'flat_gl',lb:'玻璃原料'},
+// 纯碱（侯氏法）需要合成氨：补充氨→纯碱连线
+{s:'ammonia',t:'soda',lb:'侯氏法联碱需氨'},
+
+// 煤化工
+{s:'coal',t:'syngas',lb:'气化'},{s:'coal',t:'coke',lb:'干馏炼焦→焦炭'},
+{s:'coal',t:'coke_gas',lb:'干馏→焦炉气副产'},{s:'coal',t:'coal_tar',lb:'干馏→煤焦油副产'},
+{s:'coal',t:'crude_bz',lb:'干馏→粗苯副产'},
+{s:'coal',t:'t_power',lb:'燃煤发电'},{s:'syngas',t:'methanol',lb:'甲醇合成'},
+{s:'coal',t:'coal_po',lb:'煤→甲醇→MTO/MTP烯烃'},
+{s:'syngas',t:'ammonia',lb:'合成氨'},{s:'ammonia',t:'urea',lb:'与CO₂合成'},
+// 电石修正：补充石灰石（钙源）→电石
+{s:'coke',t:'carbide',lb:'电弧炉（碳源）'},
+{s:'limestone',t:'carbide',lb:'电弧炉（钙源，生石灰）'},
+{s:'coke_gas',t:'methanol',lb:'合成气路线'},
+{s:'carbide',t:'acetylene',lb:'水解'},{s:'acetylene',t:'vcm',lb:'加成HCl→VCM(电石法)'},
+{s:'acetylene',t:'bdo',lb:'与甲醛反应(Reppe)'},{s:'bdo',t:'ptmeg',lb:'开环聚合'},
+{s:'ptmeg',t:'t_spandex',lb:'与MDI聚合→氨纶'},{s:'methanol',t:'meth_ds',lb:'衍生加工'},
+{s:'methanol',t:'ethylene',lb:'MTO工艺'},
+{s:'methanol',t:'propylene',lb:'MTP工艺'},
+// EG煤制路线修正：合成气→EG（草酸酯法），不是甲醇→EG
+{s:'syngas',t:'eg',lb:'草酸酯法煤制EG'},
+{s:'urea',t:'t_fert',lb:'氮肥'},
+{s:'coke',t:'t_steel',lb:'高炉炼铁'},
+
+// 新能源
+{s:'si_ore',t:'ind_si',lb:'碳热还原冶炼'},{s:'li_ore',t:'li_salt',lb:'提锂精制'},
+{s:'ind_si',t:'poly_si',lb:'提纯(西门子法)'},{s:'ind_si',t:'org_si',lb:'与氯甲烷反应'},
+{s:'ind_si',t:'t_al',lb:'铝硅合金'},
+{s:'poly_si',t:'wafer',lb:'拉晶→切片'},{s:'wafer',t:'t_pv',lb:'电池片→组件'},
+{s:'org_si',t:'t_orgsi',lb:'硅橡胶/硅油/树脂'},{s:'li_salt',t:'licarb',lb:'碳酸化沉淀'},
+{s:'li_salt',t:'lioh',lb:'苛化'},
+// LFP修正：碳酸锂（锂源）+磷酸铁（磷源）共同合成
+{s:'licarb',t:'lfp',lb:'碳酸锂（锂源）'},
+{s:'iron_phosphate',t:'lfp',lb:'磷酸铁（磷源）'},
+{s:'lfp',t:'t_batt',lb:'LFP电池正极'},
+{s:'lioh',t:'ncm',lb:'与三元前驱体高温烧结'},
+// 三元前驱体修正：镍+钴+锰 三种金属共沉淀
+{s:'nickel',t:'ncm_precursor',lb:'硫酸镍（镍源）'},
+{s:'cobalt_salt',t:'ncm_precursor',lb:'硫酸钴（钴源）'},
+{s:'manganese',t:'ncm_precursor',lb:'硫酸锰（锰源）'},
+{s:'ncm_precursor',t:'ncm',lb:'高温烧结'},
+{s:'ncm',t:'t_batt',lb:'三元电池正极'},{s:'t_batt',t:'t_auto',lb:'动力电池装车'},
+{s:'t_pv',t:'t_batt',lb:'储能配套'},
+{s:'cobalt_ore',t:'cobalt_salt',lb:'湿法冶炼'},
+
+// 橡胶
+{s:'rtree',t:'latex',lb:'割胶'},{s:'latex',t:'nr',lb:'标准化→全乳胶'},
+{s:'latex',t:'rss20',lb:'烟熏压片→20号胶'},{s:'butadiene',t:'sbr',lb:'与苯乙烯共聚'},
+{s:'butadiene',t:'br',lb:'配位聚合'},{s:'butadiene',t:'nbr',lb:'与丙烯腈共聚'},
+{s:'nr',t:'t_tire',lb:'天然胶轮胎'},{s:'rss20',t:'t_tire',lb:'标准胶轮胎'},
+{s:'sbr',t:'t_tire',lb:'合成橡胶轮胎'},{s:'br',t:'t_tire',lb:'顺丁胶轮胎'},
+{s:'nr',t:'t_tape',lb:'胶带胶管'},{s:'t_tire',t:'t_auto',lb:'配套装车'},
+
+// 纸浆
+{s:'wood',t:'pulp_mid',lb:'制浆工艺'},{s:'pulp_mid',t:'paper_pu',lb:'→纸浆期货'},
+{s:'pulp_mid',t:'viscose',lb:'浆粕→粘胶'},{s:'paper_pu',t:'t_paper',lb:'造纸'},
+{s:'viscose',t:'t_text',lb:'纺织面料'},{s:'cotton',t:'t_text',lb:'天然棉纤维'},
+{s:'dissolve_pulp',t:'viscose',lb:'碱溶纺丝'},{s:'dissolve_pulp',t:'lyocell',lb:'NMMO溶解纺丝'},
+{s:'lyocell',t:'t_text',lb:'高端纤维素织物'},
+{s:'wood',t:'packaging_paper',lb:'制浆→纸'},{s:'packaging_paper',t:'t_pack',lb:'包装箱纸'},
+{s:'pulp_mid',t:'packaging_paper',lb:'造纸原料'},
+
+// 化肥链
+{s:'coal',t:'ammonia',lb:'气化→合成气→氨（煤制）'},
+{s:'natgas',t:'ammonia',lb:'蒸汽重整→氨（气制）'},
+{s:'lng',t:'ammonia',lb:'制氢→合成氨（气制）'},
+{s:'ammonia',t:'liquid_ammonia',lb:'液化'},
+{s:'sulfur',t:'sulphuric_acid',lb:'焚烧制酸'},
+{s:'phosphate_ore',t:'phos_acid',lb:'磷矿石湿法磷酸'},
+{s:'sulphuric_acid',t:'phos_acid',lb:'硫酸溶解磷矿'},
+// 磷矿石→硫酸 的错误连线已删除（磷矿石不生产硫酸）
+{s:'phos_acid',t:'map',lb:'磷酸+液氨'},
+{s:'phos_acid',t:'dap',lb:'磷酸+液氨高氨比'},
+{s:'liquid_ammonia',t:'map',lb:'液氨中和'},
+{s:'liquid_ammonia',t:'dap',lb:'液氨高氨比'},
+{s:'urea',t:'complex_fert',lb:'氮源'},{s:'map',t:'complex_fert',lb:'磷氮源'},
+{s:'potash',t:'complex_fert',lb:'钾源'},{s:'urea',t:'t_crop',lb:'施肥'},
+{s:'dap',t:'t_crop',lb:'施肥'},{s:'potash',t:'t_crop',lb:'施肥'},
+{s:'complex_fert',t:'t_crop',lb:'三元施肥'},
+
+// 磷化工
+{s:'phosphate_ore',t:'yellow_p',lb:'电炉还原（磷矿石）'},
+{s:'coke',t:'yellow_p',lb:'还原剂（焦炭）'},
+{s:'yellow_p',t:'phos_acid',lb:'氧化（热法磷酸）'},
+{s:'phos_acid',t:'iron_phosphate',lb:'+铁盐制备'},
+{s:'phos_acid',t:'trisodium_p',lb:'磷酸盐化工'},{s:'yellow_p',t:'glyphosate',lb:'有机磷路线'},
+{s:'glycine',t:'glyphosate',lb:'甘氨酸路线合成'},{s:'glyphosate',t:'t_crop',lb:'除草剂施用'},
+{s:'yellow_p',t:'p_flame',lb:'磷系阻燃剂'},
+
+// 农产品链 — 严格物质流，删除伪替代关系线
+{s:'soy',t:'soybean_meal',lb:'压榨分离'},
+{s:'soy',t:'soyoil',lb:'压榨分离'},
+// 删除 corn→soybean_meal（玉米不生产豆粕，属比价联动）
+// 删除 palm_oil→soyoil（棕榈油不是豆油原料，属替代关系）
+// 删除 rapeseed_oil→soyoil（菜油不是豆油原料，属替代关系）
+// 删除 soy→tapioca_starch（大豆不生产木薯淀粉，属替代关系）
+// 油脂三姐妹替代关系用 type:'sub' 虚线表示
+{s:'soyoil',t:'palm_oil',lb:'植物油替代',type:'sub'},
+{s:'soyoil',t:'rapeseed_oil',lb:'植物油替代',type:'sub'},
+{s:'soybean_meal',t:'t_feed',lb:'蛋白原料'},
+{s:'corn',t:'t_feed',lb:'能量饲料'},
+{s:'rapemeal',t:'t_feed',lb:'水产/禽饲料蛋白'},
+{s:'fish_meal',t:'t_feed',lb:'水产蛋白原料'},
+{s:'t_feed',t:'live_hog',lb:'配合饲料'},{s:'t_feed',t:'t_livestock',lb:'禽类养殖'},
+{s:'live_hog',t:'t_livestock',lb:'生猪屠宰'},{s:'egg',t:'t_livestock',lb:'蛋品消费'},
+{s:'wheat',t:'t_food',lb:'面粉加工'},{s:'soyoil',t:'t_food',lb:'食用油'},{s:'palm_oil',t:'t_food',lb:'食用油'},
+{s:'rapeseed_oil',t:'t_food',lb:'食用油'},
+{s:'sunflower_seed',t:'t_food',lb:'花生油/葵花籽油'},
+{s:'sugar',t:'t_food',lb:'食品甜味剂'},
+{s:'corn',t:'corn_starch',lb:'湿磨提取'},
+{s:'corn_starch',t:'pla_resin',lb:'发酵乳酸→聚乳酸'},
+{s:'corn_starch',t:'t_food',lb:'淀粉糖/变性淀粉'},
+{s:'soyoil',t:'biodiesel',lb:'酯交换'},
+{s:'palm_oil',t:'biodiesel',lb:'酯交换'},
+{s:'biodiesel',t:'t_road_trans',lb:'B5掺混→道路运输'},
+{s:'pla_resin',t:'t_pack',lb:'降解餐具/包装'},
+{s:'rapemeal',t:'t_livestock',lb:'水产/禽饲料蛋白'},
+
+// 有色金属链
+{s:'copper_ore',t:'copper',lb:'冶炼精炼'},
+{s:'alumina',t:'aluminum',lb:'电解'},
+{s:'copper',t:'t_construction_m',lb:'电线管道'},{s:'aluminum',t:'t_construction_m',lb:'铝型材门窗'},
+{s:'zinc',t:'t_construction_m',lb:'镀锌钢材防腐'},{s:'copper',t:'t_ev_m',lb:'电机/充电桩'},
+{s:'aluminum',t:'t_ev_m',lb:'车身/电池壳'},{s:'nickel',t:'t_ev_m',lb:'三元电池正极'},
+{s:'copper',t:'t_pv_m',lb:'导线/汇流条'},{s:'aluminum',t:'t_pv_m',lb:'边框/支架'},
+{s:'silver',t:'t_pv_m',lb:'银浆导电'},
+{s:'iron_ore',t:'steel_billet',lb:'高炉炼铁→炼钢'},{s:'coke',t:'steel_billet',lb:'还原剂'},
+{s:'scrap_steel',t:'steel_billet',lb:'电弧炉炼钢'},
+{s:'steel_billet',t:'rebar',lb:'轧制'},
+{s:'steel_billet',t:'hot_roll',lb:'热轧'},{s:'hot_roll',t:'galv_sheet',lb:'冷轧→镀锌'},
+{s:'hot_roll',t:'silicon_steel',lb:'硅钢轧制'},{s:'zinc',t:'galv_sheet',lb:'镀锌防腐'},
+{s:'galv_sheet',t:'t_auto',lb:'汽车冲压件'},{s:'galv_sheet',t:'t_appl',lb:'家电面板'},
+{s:'rebar',t:'t_const',lb:'建筑配筋'},
+{s:'manganese',t:'steel_billet',lb:'锰系脱氧合金'},{s:'silicon_iron',t:'steel_billet',lb:'硅系脱氧'},
+{s:'tin_metal',t:'t_appl',lb:'焊料/镀锡'},{s:'tin_metal',t:'t_pv',lb:'光伏焊带含锡'},
+
+// 石油焦链连线
+{s:'residue',t:'pet_coke',lb:'延迟焦化'},{s:'pet_coke',t:'calc_coke',lb:'回转窑煅烧'},
+{s:'pet_coke',t:'needle_coke',lb:'→油系针状焦(低硫焦)'},
+{s:'coal_tar',t:'coal_pitch',lb:'蒸馏重质组分'},
+{s:'coal_pitch',t:'needle_coke',lb:'煤沥青延迟焦化(煤系主路线)'},
+{s:'coal_pitch',t:'graphite_elec',lb:'黏结剂'},{s:'needle_coke',t:'graphite_elec',lb:'骨料'},
+{s:'calc_coke',t:'prebake_anode',lb:'骨料(80%)'},{s:'coal_pitch',t:'prebake_anode',lb:'黏结剂'},
+{s:'needle_coke',t:'anode_graphite',lb:'石墨化制负极'},{s:'pet_coke',t:'anode_graphite',lb:'低硫焦石墨化'},
+{s:'graphite_elec',t:'t_steel',lb:'电炉炼钢耗材'},{s:'prebake_anode',t:'aluminum',lb:'电解槽阳极'},
+{s:'pet_coke',t:'petcoke_fuel',lb:'中高硫燃料'},{s:'anode_graphite',t:'t_batt',lb:'负极材料'},
+
+// 石蜡/润滑油链
+{s:'residue',t:'base_oil',lb:'减压蒸馏→加氢'},{s:'base_oil',t:'lube_oil',lb:'+添加剂调配'},
+{s:'base_oil',t:'paraffin',lb:'脱蜡副产'},
+
+// MTBE/烷基化油 → 汽油调和
+{s:'c4frac',t:'mtbe',lb:'异丁烯+甲醇醚化'},{s:'methanol',t:'mtbe',lb:'醚化'},
+{s:'mtbe',t:'t_gasoline',lb:'辛烷值调和组分'},
+{s:'crude',t:'alkylate_oil',lb:'C4烯烃烷基化'},
+{s:'c4frac',t:'alkylate_oil',lb:'烷基化反应'},{s:'alkylate_oil',t:'t_gasoline',lb:'清洁汽油调和组分'},
+{s:'diesel',t:'t_road_trans',lb:'柴油→道路运输'},
+{s:'t_gasoline',t:'t_road_trans',lb:'成品汽油'},
+
+// 芳烃化工连线
+{s:'propylene',t:'acetone',lb:'→异丙苯→苯酚联产丙酮'},
+{s:'benzene',t:'isopropylbenz',lb:'与丙烯烃化'},{s:'isopropylbenz',t:'phenol',lb:'氧化→分解'},
+{s:'isopropylbenz',t:'acetone',lb:'联产'},
+{s:'acetone',t:'mma',lb:'丙酮氰醇法'},{s:'acetone',t:'bpa',lb:'与苯酚缩合'},
+{s:'mxylene',t:'o_xylene',lb:'低温分离'},{s:'o_xylene',t:'phthalic_anhy',lb:'催化氧化'},
+{s:'phthalic_anhy',t:'dop_plasticizer',lb:'+辛醇酯化'},
+{s:'mma',t:'pmma_resin',lb:'聚合'},{s:'pmma_resin',t:'t_appl',lb:'显示屏/光学件'},
+{s:'phenol',t:'cyclohexanone',lb:'加氢→氧化'},{s:'cyclohexanone',t:'capro',lb:'肟化→重排'},
+{s:'cyclohexanone',t:'adipic_acid2',lb:'硝酸氧化'},
+{s:'adipic_acid2',t:'t_nylon',lb:'→PA66聚合'},{s:'adipic_acid2',t:'t_pu',lb:'聚氨酯聚酯多元醇'},
+{s:'capro',t:'pa6_fiber',lb:'开环聚合→锦纶PA6'},{s:'adipic_acid2',t:'pa6_fiber',lb:'→PA66'},
+{s:'c4frac',t:'maleic_anhy',lb:'正丁烷氧化'},
+{s:'neopentyl_glycol',t:'t_ep',lb:'不饱和树脂原料'},{s:'maleic_anhy',t:'t_ep',lb:'不饱和聚酯树脂'},
+{s:'phenol',t:'phenol_formaldehyde',lb:'苯酚'},
+{s:'formaldehyde',t:'phenol_formaldehyde',lb:'甲醛'},
+{s:'formaldehyde',t:'mdi_tdi',lb:'甲醛路线→MDI'},
+{s:'methanol',t:'formaldehyde',lb:'催化氧化'},
+{s:'methanol',t:'acetic_acid',lb:'羰基化'},
+{s:'methanol',t:'dmc',lb:'草酸酯法'},
+{s:'acetic_acid',t:'ethyl_acetate',lb:'+乙醇酯化'},
+{s:'acetic_acid',t:'vinyl_acetate',lb:'+乙烯氧化'},{s:'vinyl_acetate',t:'pvoh',lb:'聚合→水解'},
+{s:'ethylene',t:'vinyl_acetate',lb:'乙烯参与氧化'},
+{s:'propylene',t:'acrylic_acid',lb:'两步氧化'},
+{s:'propylene',t:'acrylonitrile',lb:'氨氧化'},{s:'acrylonitrile',t:'abs_resin',lb:'三元共聚'},
+// ABS三元共聚：苯乙烯+丙烯腈+丁二烯
+{s:'styrene',t:'abs_resin',lb:'苯乙烯组分'},{s:'butadiene',t:'abs_resin',lb:'丁二烯组分'},
+{s:'abs_resin',t:'t_appl',lb:'家电外壳/3C内饰'},
+{s:'acrylonitrile',t:'acrylic_fiber',lb:'湿法纺丝'},{s:'acrylonitrile',t:'nbr',lb:'与丁二烯共聚'},
+{s:'propylene',t:'epoxy_propane',lb:'氯醇/HPPO法'},{s:'epoxy_propane',t:'propylene_glycol',lb:'水合'},
+{s:'epoxy_propane',t:'polyether_polyol',lb:'开环聚合'},{s:'polyether_polyol',t:'t_pu',lb:'软/硬泡聚醚'},
+{s:'pp',t:'bopp_film',lb:'双向拉伸制膜'},{s:'bopp_film',t:'t_pack',lb:'食品/烟草包装'},
+{s:'pe',t:'t_agri',lb:'农膜'},
+{s:'ethylene',t:'eva_resin',lb:'高压共聚'},
+{s:'vinyl_acetate',t:'eva_resin',lb:'共聚'},{s:'eva_resin',t:'t_pv',lb:'光伏封装膜'},
+{s:'ethylene',t:'poe_resin',lb:'与辛烯共聚'},{s:'poe_resin',t:'t_pv',lb:'光伏封装增效'},
+{s:'acrylonitrile',t:'carbon_fiber',lb:'PAN→碳化'},
+{s:'carbon_fiber',t:'t_pv',lb:'风电叶片'},{s:'carbon_fiber',t:'t_auto',lb:'车身轻量化'},
+
+// 橡胶链补充
+{s:'c4frac',t:'sbs_rubber',lb:'丁二烯组分'},
+{s:'styrene',t:'sbr',lb:'与丁二烯共聚'},
+{s:'styrene',t:'sbs_rubber',lb:'苯乙烯组分'},{s:'butadiene',t:'sbs_rubber',lb:'丁二烯嵌段共聚'},
+{s:'sbs_rubber',t:'bitumen',lb:'SBS改性沥青'},{s:'sbs_rubber',t:'t_pack',lb:'胶粘剂/鞋底'},
+{s:'coal_tar',t:'carbon_black',lb:'蒽油为原料'},
+{s:'carbon_black',t:'t_tire',lb:'橡胶补强（70%）'},
+{s:'zinc',t:'t_tire',lb:'硫化活化（氧化锌）'},
+
+// 聚氨酯/BDO
+{s:'bdo',t:'thf',lb:'脱水'},{s:'thf',t:'ptmeg',lb:'开环聚合'},
+{s:'bdo',t:'gbl',lb:'氧化脱氢'},{s:'gbl',t:'nmp2',lb:'甲胺缩合'},
+{s:'ptmeg',t:'tpu_resin',lb:'+MDI/TDI合成'},{s:'mdi_tdi',t:'tpu_resin',lb:'聚合'},
+{s:'ptmeg',t:'spandex_fiber',lb:'+MDI纺丝'},{s:'mdi_tdi',t:'spandex_fiber',lb:'聚合'},
+
+// 锂电补充
+{s:'dmc',t:'electrolyte',lb:'溶剂（EC/DMC/EMC）'},{s:'lpf6',t:'electrolyte',lb:'电解质盐'},
+{s:'electrolyte',t:'t_batt',lb:'离子传导介质'},
+{s:'separator',t:'t_batt',lb:'安全隔膜'},{s:'copper_foil2',t:'t_batt',lb:'负极集流体'},
+{s:'alu_foil',t:'t_batt',lb:'正极集流体'},{s:'nmp2',t:'t_batt',lb:'极片涂布溶剂'},
+{s:'pvdf',t:'t_batt',lb:'正极粘结剂'},{s:'nat_graphite_neg',t:'t_batt',lb:'天然石墨负极'},
+{s:'anhy_hf',t:'lpf6',lb:'氟化制备'},
+
+// 有机硅
+{s:'org_si',t:'organic_silicon_dmc',lb:'水解缩合'},
+{s:'organic_silicon_dmc',t:'t_orgsi',lb:'硅橡胶/硅油/树脂'},
+
+// 氟化工链连线
+{s:'fluorite',t:'anhy_hf',lb:'萤石+硫酸'},{s:'anhy_hf',t:'refrigerant',lb:'→HCFC/HFC'},
+{s:'anhy_hf',t:'pvdf',lb:'→VDF→聚合'},
+{s:'fluorite',t:'ptfe_resin',lb:'→TFE→聚合'},
+{s:'anhy_hf',t:'ptfe_resin',lb:'四氟乙烯路线'},
+{s:'refrigerant',t:'t_appl',lb:'家用空调'},
+{s:'soda',t:'glass_fiber',lb:'玻纤熔制原料'},
+{s:'limestone',t:'glass_fiber',lb:'玻纤原料'},{s:'sio2',t:'glass_fiber',lb:'SiO₂原料'},
+{s:'glass_fiber',t:'t_pv',lb:'光伏组件框架'},{s:'glass_fiber',t:'t_auto',lb:'汽车轻量化'},
+
+// 化纤补充
+{s:'pa6_fiber',t:'t_text',lb:'锦纶面料'},
+{s:'spandex_fiber',t:'t_text',lb:'弹力织物'},
+{s:'acrylic_fiber',t:'t_text',lb:'腈纶毛毯织物'},
+{s:'disperse_dye',t:'t_text',lb:'涤纶染色'},
+{s:'reactive_dye',t:'t_text',lb:'棉/粘胶染色'},
+{s:'methanol',t:'dimethyl_ether',lb:'脱水'},
+{s:'urea',t:'melamine',lb:'高温重排'},{s:'melamine',t:'t_const',lb:'三聚氰胺板材/涂料'},
+{s:'urea',t:'ammonium_sulfate',lb:'联产（己内酰胺副产路线）'},
+{s:'syngas',t:'hydrogen',lb:'水煤气→变压吸附'},
+{s:'natgas',t:'hydrogen',lb:'蒸汽重整制氢'},
+{s:'ammonium_sulfate',t:'t_crop',lb:'硫酸铵氮肥施用'},
+{s:'lng',t:'t_power',lb:'发电燃料'},
+// 棉籽→棉粕（修复断链：棉粕原来无上游）
+{s:'cotton',t:'soybean_meal',lb:'',type:'sub'}, // 棉粕与豆粕竞争替代（用sub类型）
+// 注：棉粕是棉籽榨油副产，这里 cotton 代表棉花，实际上棉粕来自棉籽
+// 保留现有节点结构，通过desc说明
+{s:'corn',t:'ethanol_petrol',lb:'淀粉发酵乙醇'},
+{s:'propylene_glycol',t:'t_pu',lb:'不饱和树脂原料'},
+{s:'ethyl_acetate',t:'t_coating',lb:'涂料溶剂'},
+{s:'alkyd_resin',t:'t_const',lb:'涂料涂装'},
+{s:'ptfe_resin',t:'t_orgsi',lb:'耐化学密封/管道'},
+// ====== 有色金属链：打通上游矿端 ======
+{s:'bauxite', t:'alumina', lb:'拜耳法溶出（铝土矿）'},
+{s:'zinc_ore', t:'zinc', lb:'冶炼精炼'},
+{s:'lead_ore', t:'lead', lb:'冶炼/拆解回收'},
+{s:'nickel_ore', t:'nickel', lb:'冶炼（纯镍/NPI）'},
+{s:'tin_ore', t:'tin_metal', lb:'冶炼精锡'},
+
+// ====== 有色/贵金属链：打通下游终端断层 ======
+{s:'lead', t:'t_battery_lead', lb:'制造极板与活性物质'},
+{s:'gold', t:'t_jewelry_invest', lb:'金饰制造/金条储藏'},
+{s:'silver', t:'t_jewelry_invest', lb:'银饰/银币'},
+{s:'silver', t:'t_appl', lb:'银触点/电子元器件'},
+
+// ====== 不锈钢下游去向补充 ======
+{s:'stainless_steel', t:'t_appl', lb:'厨卫家电/内胆'},
+{s:'stainless_steel', t:'t_construction_m', lb:'建筑装饰/化工管道'},
+// ══════════════════════════════════════
+// 【修复批次A - 文档一】化工工艺主路线修正
+// ══════════════════════════════════════
+// A1. 环己酮/尼龙：纯苯直接加氢（国内80%主路线），补充苯→环己酮
+{s:'benzene',t:'cyclohexanone',lb:'纯苯加氢氧化(国内主路线)'},
+// A2. 环氧丙烷(PO)：氯醇法耗氯大户
+{s:'chlorine',t:'epoxy_propane',lb:'氯醇法(耗氯大户)'},
+// A3. 钛白粉：硫酸法和氯化法两条工艺路线
+{s:'sulphuric_acid',t:'titanium_dio',lb:'硫酸法钛白粉(主流)'},
+{s:'chlorine',t:'titanium_dio',lb:'氯化法钛白粉'},
+
+// ══════════════════════════════════════
+// 【修复批次B - 文档二】跨链断层补充
+// ══════════════════════════════════════
+// B1. 纯碱→碳酸锂（新能源跨链，提供碳酸根）
+{s:'soda',t:'licarb',lb:'沉淀剂(提供碳酸根)'},
+// B2. 冰醋酸→PTA（煤化工/聚酯跨链，PX氧化溶剂）
+{s:'acetic_acid',t:'pta',lb:'PX氧化溶剂(吨耗约40kg)'},
+// B3. 小麦→饲料（麦玉比价替代，农产品核心交易逻辑）
+{s:'wheat',t:'t_feed',type:'sub',lb:'小麦/玉米比价替代饲料'},
+// B4. 甲醇→生物柴油（酯交换反应核心醇类）
+{s:'methanol',t:'biodiesel',lb:'酯交换反应醇类(吨耗约0.1t)'},
+// B5. 石油焦→工业硅（碳质还原剂）
+{s:'pet_coke',t:'ind_si',lb:'碳质还原剂'},
+{s:'coal',t:'ind_si',type:'sub',lb:'洗精煤(碳质还原剂)'},
+];
+
+// 补充节点（乙醇汽油、棉粕等）
+NODES.push(
+{id:'ethanol_petrol',ch:'agri',role:'end',
+ lb:'乙醇汽油',sb:'汽油+生物乙醇',
+ desc:'玉米/木薯乙醇与汽油按E10（含10%乙醇）混合，是消化粮食乙醇的政策渠道，受玉米价格/粮食政策影响，与MTBE竞争。'},
+{id:'propylene_glycol',ch:'polyolefin',role:'mid',
+ lb:'丙二醇',sb:'环氧丙烷水合',
+ desc:'环氧丙烷水合，用于不饱和聚酯树脂/聚氨酯聚醚/食品级保湿剂/化妆品/防冻液。'},
+{id:'cotton_meal',  ch:'agri',role:'end',
+ lb:'棉粕',sb:'棉籽榨油副产饲料蛋白',
+ desc:'棉籽榨油副产（棉粕，蛋白约45%），饲料蛋白原料，与豆粕形成替代竞争关系。'},
+// 【新增】不锈钢节点（镍的最大下游，占镍需求约70%）
+{id:'stainless_steel',ch:'ferrous',also:['metal'],role:'end',
+ lb:'不锈钢',sb:'镍铬合金钢·终端',
+ desc:'全球约70%的镍用于生产不锈钢（尤其304/316系列，含镍8-12%）。不锈钢广泛应用于地产（管道/厨具）、化工设备、汽车及食品加工业。中国是全球最大不锈钢生产国。镍铁（NPI）是国内不锈钢炼制的主要镍源，已基本替代传统精炼镍。',
+ mn:'不锈钢消耗全球70%的镍——\n地产/基建好→不锈钢需求旺→镍铁（NPI）需求旺。\n印尼镍矿RKAB配额是NPI生产的最大供给扰动。\n304系列是价格基准，含镍8%是核心成本项。'},
+);
+LINKS.push(
+{s:'epoxy_propane',t:'propylene_glycol',lb:'水合（修正）'},
+{s:'soybean_meal',t:'cotton_meal',lb:'',type:'sub'}, // 竞争替代
+{s:'fish_meal',t:'cotton_meal',lb:'',type:'sub'},   // 竞争替代
+// 【修复B2】镍→不锈钢（镍需求最大基本面，占比约70%）
+{s:'nickel',t:'stainless_steel',lb:'核心防腐合金元素(约70%用量)'},
+{s:'steel_billet',t:'stainless_steel',lb:'铁基原料'},
+);
+
+// ═══════════════════════════════════════════════════
+// 初始化
+// ═══════════════════════════════════════════════════
+const nodeMap={};
+NODES.forEach(n=>{n.w=nw(n);n.h=NH;nodeMap[n.id]=n;});
+// 分离 flow 连线（参与DAG）和 sub 连线（替代关系，不参与拓扑）
+const linkDataAll=LINKS.filter(l=>l.s!==l.t).map(l=>({...l,sn:nodeMap[l.s],tn:nodeMap[l.t]})).filter(l=>l.sn&&l.tn);
+const linkData=linkDataAll.filter(l=>l.type!=='sub'); // flow only for DAG+render
+const linkDataSub=linkDataAll.filter(l=>l.type==='sub'); // substitute lines
+
+// ═══════════════════════════════════════════════════
+// DAG 拓扑层级布局 — 支持有向有环图（检测并断环）
+// ═══════════════════════════════════════════════════
+function computeDAGLayers(nodes, links){
+  const ids=new Set(nodes.map(n=>n.id));
+  const intraLinks=links.filter(l=>ids.has(l.s)&&ids.has(l.t));
+  
+  // 检测并移除回边（cycle breaking via DFS back-edge removal）
+  const adj={};
+  nodes.forEach(n=>{adj[n.id]=[];});
+  intraLinks.forEach(l=>{adj[l.s].push(l.t);});
+  
+  const visited=new Set(), stack=new Set(), backEdges=new Set();
+  function dfs(u){
+    visited.add(u);stack.add(u);
+    (adj[u]||[]).forEach(v=>{
+      if(!visited.has(v)){dfs(v);}
+      else if(stack.has(v)){backEdges.add(u+'->'+v);}
+    });
+    stack.delete(u);
+  }
+  nodes.forEach(n=>{if(!visited.has(n.id))dfs(n.id);});
+  
+  // 用无环连线重新计算入度
+  const cleanLinks=intraLinks.filter(l=>!backEdges.has(l.s+'->'+l.t));
+  const inDeg={};
+  nodes.forEach(n=>{inDeg[n.id]=0;});
+  cleanLinks.forEach(l=>{inDeg[l.t]=(inDeg[l.t]||0)+1;});
+  
+  const layer={};
+  const queue=nodes.filter(n=>inDeg[n.id]===0).map(n=>n.id);
+  queue.forEach(id=>{layer[id]=0;});
+  const adjClean={};
+  nodes.forEach(n=>{adjClean[n.id]=[];});
+  cleanLinks.forEach(l=>{adjClean[l.s].push(l.t);});
+  let qi=0;
+  while(qi<queue.length){
+    const cur=queue[qi++];
+    adjClean[cur].forEach(nxt=>{
+      const newL=(layer[cur]||0)+1;
+      if(layer[nxt]===undefined||layer[nxt]<newL) layer[nxt]=newL;
+      inDeg[nxt]--;
+      if(inDeg[nxt]<=0&&layer[nxt]!==undefined) queue.push(nxt);
+    });
+  }
+  const maxL=Math.max(0,...Object.values(layer));
+  nodes.forEach(n=>{if(layer[n.id]===undefined) layer[n.id]=maxL+1;});
+  return layer;
+}
+
+function sortLayerByBarycenter(layerNodes, prevLayerNodes, links){
+  if(!prevLayerNodes||!prevLayerNodes.length) return;
+  const xMap={};
+  prevLayerNodes.forEach(n=>{xMap[n.id]=n._tmpX||0;});
+  layerNodes.forEach(n=>{
+    const parents=links.filter(l=>l.t===n.id&&xMap[l.s]!==undefined);
+    if(parents.length){n._bary=parents.reduce((s,l)=>s+xMap[l.s],0)/parents.length;}
+    else{n._bary=Infinity;}
+  });
+  layerNodes.sort((a,b)=>(a._bary||0)-(b._bary||0));
+}
+
+const BLOCK_PAD_X=14, BLOCK_PAD_Y=18;
+const BLOCK_GAP_X=22, BLOCK_GAP_Y=22;
+const NODE_H_GAP=12;
+const LAYER_V_GAP=44;
+const TITLE_H=26, FOOT_H=14;
+
+function calcBlockSizeDAG(chain){
+  const nodes=NODES.filter(n=>n.ch===chain);
+  const links=linkData.filter(l=>l.sn.ch===chain&&l.tn.ch===chain);
+  const layerMap=computeDAGLayers(nodes,links.map(l=>({s:l.s,t:l.t})));
+  const maxL=Math.max(0,...Object.values(layerMap));
+  const layerWidths=[];
+  for(let l=0;l<=maxL;l++){
+    const grp=nodes.filter(n=>layerMap[n.id]===l);
+    const w=grp.reduce((s,n)=>s+n.w,0)+(grp.length-1)*NODE_H_GAP;
+    layerWidths.push(w);
+  }
+  const bw=Math.max(...layerWidths)+BLOCK_PAD_X*2;
+  const bh=TITLE_H+FOOT_H+BLOCK_PAD_Y*2+(maxL+1)*NH+maxL*LAYER_V_GAP;
+  return {bw,bh,maxL,layerMap};
+}
+
+function layoutAll(){
+  const COLS=3;
+  const blocks=CHAIN_ORDER.map(chain=>({chain,...calcBlockSizeDAG(chain)}));
+  const rows=[];
+  for(let i=0;i<blocks.length;i+=COLS) rows.push(blocks.slice(i,i+COLS));
+  const colWidths=Array.from({length:COLS},(_,ci)=>Math.max(...rows.map(row=>row[ci]?.bw||0)));
+  const rowHeights=rows.map(row=>Math.max(...row.map(b=>b.bh)));
+  const colX=[BLOCK_GAP_X];
+  for(let i=1;i<COLS;i++) colX.push(colX[i-1]+colWidths[i-1]+BLOCK_GAP_X);
+  const rowY=[TOP+BLOCK_GAP_Y];
+  for(let i=1;i<rows.length;i++) rowY.push(rowY[i-1]+rowHeights[i-1]+BLOCK_GAP_Y);
+  const totalW=colX[COLS-1]+colWidths[COLS-1]+BLOCK_GAP_X;
+  const totalH=rowY[rowY.length-1]+rowHeights[rowHeights.length-1]+BLOCK_GAP_Y;
+  const svgEl=document.getElementById('sv');
+  svgEl.setAttribute('width',Math.max(totalW,window.innerWidth));
+  svgEl.setAttribute('height',Math.max(totalH,window.innerHeight-TOP));
+
+  CHAIN_ORDER.forEach((chain,ci)=>{
+    const col=ci%COLS, row=Math.floor(ci/COLS);
+    const bx=colX[col], by=rowY[row];
+    const bw=colWidths[col], bh=rowHeights[row];
+    const nodes=NODES.filter(n=>n.ch===chain);
+    nodes.forEach(n=>{n._bx=bx;n._by=by;n._bw=bw;n._bh=bh;});
+    const intraLinks=linkData.filter(l=>l.sn.ch===chain&&l.tn.ch===chain).map(l=>({s:l.s,t:l.t}));
+    const layerMap=computeDAGLayers(nodes,intraLinks);
+    const maxL=Math.max(0,...Object.values(layerMap));
+    const contentTop=by+TITLE_H+BLOCK_PAD_Y;
+    const innerW=bw-BLOCK_PAD_X*2;
+    for(let l=0;l<=maxL;l++){
+      const grp=nodes.filter(n=>layerMap[n.id]===l);
+      grp.sort((a,b)=>a.id.localeCompare(b.id));
+      const totalW=grp.reduce((s,n)=>s+n.w,0)+(grp.length-1)*NODE_H_GAP;
+      let cx=bx+BLOCK_PAD_X+(innerW-totalW)/2;
+      const cy=contentTop+l*(NH+LAYER_V_GAP)+NH/2;
+      grp.forEach(n=>{n.x=cx+n.w/2;n.y=cy;n._tmpX=cx+n.w/2;cx+=n.w+NODE_H_GAP;});
+    }
+    for(let l=1;l<=maxL;l++){
+      const grp=nodes.filter(n=>layerMap[n.id]===l);
+      const prev=nodes.filter(n=>layerMap[n.id]===l-1);
+      sortLayerByBarycenter(grp,prev,intraLinks);
+      const totalW=grp.reduce((s,n)=>s+n.w,0)+(grp.length-1)*NODE_H_GAP;
+      let cx=bx+BLOCK_PAD_X+(innerW-totalW)/2;
+      const cy=contentTop+l*(NH+LAYER_V_GAP)+NH/2;
+      grp.forEach(n=>{n.x=cx+n.w/2;n.y=cy;n._tmpX=cx+n.w/2;cx+=n.w+NODE_H_GAP;});
+    }
+  });
+}
+
+function layoutChain(chain){
+  const W=window.innerWidth, H=window.innerHeight-TOP;
+  const svgEl=document.getElementById('sv');
+  const nodes=NODES.filter(n=>n.ch===chain||(n.also&&n.also.includes(chain)));
+  const intraLinks=linkData
+    .filter(l=>nodes.includes(l.sn)&&nodes.includes(l.tn))
+    .map(l=>({s:l.s,t:l.t}));
+  const layerMap=computeDAGLayers(nodes,intraLinks);
+  const maxL=Math.max(0,...Object.values(layerMap));
+
+  const SIDE_PAD=32;
+  const LAYER_GAP_V=62;
+  const NODE_GAP_H=18;
+  const HEADER_H=52;
+
+  let maxLayerW=0;
+  for(let l=0;l<=maxL;l++){
+    const grp=nodes.filter(n=>layerMap[n.id]===l);
+    const w=grp.reduce((s,n)=>s+n.w,0)+(grp.length-1)*NODE_GAP_H;
+    if(w>maxLayerW) maxLayerW=w;
+  }
+  const canvasW=Math.max(W, maxLayerW+SIDE_PAD*2);
+  const canvasH=Math.max(H, TOP+HEADER_H+(maxL+1)*(NH+LAYER_GAP_V)+40);
+  svgEl.setAttribute('width',canvasW);
+  svgEl.setAttribute('height',canvasH);
+
+  for(let l=0;l<=maxL;l++){
+    const grp=nodes.filter(n=>layerMap[n.id]===l);
+    grp.sort((a,b)=>a.id.localeCompare(b.id));
+    const totalW=grp.reduce((s,n)=>s+n.w,0)+(grp.length-1)*NODE_GAP_H;
+    let cx=canvasW/2-totalW/2;
+    const cy=TOP+HEADER_H+l*(NH+LAYER_GAP_V)+NH/2;
+    grp.forEach(n=>{n.x=cx+n.w/2;n.y=cy;n._tmpX=cx+n.w/2;cx+=n.w+NODE_GAP_H;});
+  }
+  for(let l=1;l<=maxL;l++){
+    const grp=nodes.filter(n=>layerMap[n.id]===l);
+    const prev=nodes.filter(n=>layerMap[n.id]===l-1);
+    sortLayerByBarycenter(grp,prev,intraLinks);
+    const totalW=grp.reduce((s,n)=>s+n.w,0)+(grp.length-1)*NODE_GAP_H;
+    let cx=canvasW/2-totalW/2;
+    const cy=TOP+HEADER_H+l*(NH+LAYER_GAP_V)+NH/2;
+    grp.forEach(n=>{n.x=cx+n.w/2;n.y=cy;n._tmpX=cx+n.w/2;cx+=n.w+NODE_GAP_H;});
+  }
+  nodes.forEach(n=>{n._layer=layerMap[n.id]||0;});
+  layoutChain._maxL=maxL;
+  layoutChain._layerGapV=LAYER_GAP_V;
+  layoutChain._headerH=HEADER_H;
+  layoutChain._canvasW=canvasW;
+}
+
+// ═══════════════════════════════════════════════════
+// SVG 元素初始化
+// ═══════════════════════════════════════════════════
+const svgEl=document.getElementById('sv');
+const BGL=document.getElementById('BGL');
+const EL_=document.getElementById('EL');
+const NL_=document.getElementById('NL');
+// 替代关系连线层（在 EL_ 下方或上方）
+const SUB_EL=document.createElementNS('http://www.w3.org/2000/svg','g');
+SUB_EL.id='SUBEL';
+function ns(t){return document.createElementNS('http://www.w3.org/2000/svg',t);}
+
+let tx=0,ty=0,sc=1,selId=null,curChain='all';
+
+// 矩形边框交点：精确计算连线与矩形边缘的交点（修复圆形假设的bug）
+function rectEdgePoint(cx,cy,w,h,dx,dy){
+  // 从中心(cx,cy)向方向(dx,dy)射出，找矩形边框交点
+  if(Math.abs(dx)<1e-9&&Math.abs(dy)<1e-9) return {x:cx,y:cy};
+  const hw=w/2, hh=h/2;
+  // 与四条边的交点，取最小t>0
+  let t=Infinity;
+  if(Math.abs(dx)>1e-9){
+    const tx1=(dx>0?hw:-hw)/dx;
+    if(tx1>0){const y=dy*tx1;if(Math.abs(y)<=hh) t=Math.min(t,tx1);}
+  }
+  if(Math.abs(dy)>1e-9){
+    const ty1=(dy>0?hh:-hh)/dy;
+    if(ty1>0){const x=dx*ty1;if(Math.abs(x)<=hw) t=Math.min(t,ty1);}
+  }
+  if(t===Infinity) t=1;
+  return {x:cx+dx*t,y:cy+dy*t};
+}
+
+const eEls={};
+linkData.forEach(l=>{
+  const k=l.s+'_'+l.t;
+  const e=ns('path');e.setAttribute('fill','none');e.setAttribute('stroke-linecap','round');
+  EL_.appendChild(e);eEls[k]=e;
+});
+const subEls={};
+linkDataSub.forEach(l=>{
+  const k=l.s+'_'+l.t;
+  const e=ns('path');e.setAttribute('fill','none');e.setAttribute('stroke-linecap','round');
+  e.setAttribute('stroke-dasharray','4 3');
+  SUB_EL.appendChild(e);subEls[k]=e;
+});
+
+const nEls={};
+NODES.forEach(n=>{
+  const g=ns('g');g.style.cursor='pointer';
+  const col=CC[n.ch]?.c||'#6a8aaa';
+  const hw=n.w/2;
+  const bd=ns('rect');
+  bd.setAttribute('x',-hw);bd.setAttribute('y',-(NH/2));
+  bd.setAttribute('width',n.w);bd.setAttribute('height',NH);bd.setAttribute('rx','4');
+  bd.setAttribute('fill',CC[n.ch]?.bg||'#f5f7fa');bd.setAttribute('stroke',col);
+  const sw=n.anchor?2:n.fu?1.4:n.role==='end'?0.5:0.8;
+  bd.setAttribute('stroke-width',sw);
+  bd.setAttribute('stroke-opacity',n.anchor?0.95:n.fu?0.85:n.role==='end'?0.35:0.55);
+  if(n.role==='end') bd.setAttribute('stroke-dasharray','3 2');
+  g.appendChild(bd);
+
+  const maxTW=n.w-10;
+  const cw_est=n.lb.length*(n.lb.length>8?11:12.5);
+  const fs=cw_est>maxTW?Math.max(10,Math.floor(13*maxTW/cw_est)):13;
+  const t1=ns('text');
+  t1.setAttribute('text-anchor','middle');t1.setAttribute('dominant-baseline','central');
+  t1.setAttribute('font-family',"'PingFang SC','Microsoft YaHei',sans-serif");
+  t1.setAttribute('fill',col);t1.setAttribute('pointer-events','none');
+  t1.setAttribute('font-size',fs+'px');t1.setAttribute('font-weight','600');
+  t1.setAttribute('y',n.sb?'-6px':'1px');
+  t1.textContent=n.lb;g.appendChild(t1);
+
+  if(n.sb){
+    const t2=ns('text');
+    t2.setAttribute('text-anchor','middle');t2.setAttribute('dominant-baseline','central');
+    t2.setAttribute('font-family',"'PingFang SC','Microsoft YaHei',sans-serif");
+    t2.setAttribute('font-size','10px');t2.setAttribute('fill',col);t2.setAttribute('fill-opacity','0.5');
+    t2.setAttribute('pointer-events','none');t2.setAttribute('y','9px');
+    let sb=n.sb;if(sb.length>11)sb=sb.slice(0,10)+'…';
+    t2.textContent=sb;g.appendChild(t2);
+  }
+  if(n.mn){
+    const mk=ns('text');mk.setAttribute('x',-hw+3);mk.setAttribute('y',-(NH/2)+6);
+    mk.setAttribute('font-size','10px');mk.setAttribute('fill','#2cb980');mk.setAttribute('fill-opacity','0.85');
+    mk.setAttribute('pointer-events','none');mk.textContent='📌';g.appendChild(mk);
+  }
+  if(n.fu){
+    const st=ns('text');st.setAttribute('x',hw-4);st.setAttribute('y',-(NH/2)+6);
+    st.setAttribute('font-size','10px');st.setAttribute('fill','#f0c840');st.setAttribute('text-anchor','middle');
+    st.setAttribute('pointer-events','none');st.textContent='★';g.appendChild(st);
+  }
+  if(n.anchor){
+    const ak=ns('text');ak.setAttribute('x',-hw+14);ak.setAttribute('y',-(NH/2)+8);
+    ak.setAttribute('font-size','11px');ak.setAttribute('fill','#f0c840');ak.setAttribute('fill-opacity','0.95');
+    ak.setAttribute('pointer-events','none');ak.textContent='⬡';g.appendChild(ak);
+  }
+  g.addEventListener('click',()=>selNode(n.id));
+  NL_.appendChild(g);nEls[n.id]=g;
+});
+
+const gRoot=ns('g');
+svgEl.removeChild(BGL);svgEl.removeChild(EL_);svgEl.removeChild(NL_);
+gRoot.appendChild(BGL);gRoot.appendChild(SUB_EL);gRoot.appendChild(EL_);gRoot.appendChild(NL_);
+svgEl.appendChild(gRoot);
+
+// ═══════════════════════════════════════════════════
+// drawBgs
+// ═══════════════════════════════════════════════════
+function drawBgs(){
+  while(BGL.firstChild)BGL.removeChild(BGL.firstChild);
+  if(curChain!=='all'){drawSingleHeader();return;}
+  CHAIN_ORDER.forEach(chain=>{
+    const n0=NODES.find(n=>n.ch===chain);
+    if(!n0||n0._bx===undefined)return;
+    const {_bx:bx,_by:by,_bw:bw,_bh:bh}=n0;
+    const col=CC[chain]?.c||'#6a8aaa';
+    const r=ns('rect');
+    r.setAttribute('x',bx);r.setAttribute('y',by);r.setAttribute('width',bw);r.setAttribute('height',bh);r.setAttribute('rx','9');
+    r.setAttribute('fill',CC[chain]?.bg||'#f5f7fa');r.setAttribute('fill-opacity','0.92');
+    r.setAttribute('stroke',col);r.setAttribute('stroke-width','0.8');r.setAttribute('stroke-opacity','0.32');
+    BGL.appendChild(r);
+    const lb=ns('text');
+    lb.setAttribute('x',bx+10);lb.setAttribute('y',by+17);
+    lb.setAttribute('font-family',"'PingFang SC','Microsoft YaHei',sans-serif");
+    lb.setAttribute('font-size','13px');lb.setAttribute('font-weight','700');
+    lb.setAttribute('fill',col);lb.setAttribute('fill-opacity','0.72');lb.setAttribute('pointer-events','none');
+    lb.textContent=CHAIN_NAMES[chain]||chain;BGL.appendChild(lb);
+    const nodes=NODES.filter(n=>n.ch===chain);
+    const intraLinks=linkData.filter(l=>l.sn.ch===chain&&l.tn.ch===chain).map(l=>({s:l.s,t:l.t}));
+    const layerMap=computeDAGLayers(nodes,intraLinks);
+    const maxL=Math.max(0,...Object.values(layerMap));
+    const contentTop=by+TITLE_H+BLOCK_PAD_Y;
+    for(let l=0;l<maxL;l++){
+      const cy=contentTop+l*(NH+LAYER_V_GAP)+NH;
+      const divY=cy+LAYER_V_GAP/2;
+      const dl=ns('line');
+      dl.setAttribute('x1',bx+8);dl.setAttribute('y1',divY);
+      dl.setAttribute('x2',bx+bw-8);dl.setAttribute('y2',divY);
+      dl.setAttribute('stroke',col);dl.setAttribute('stroke-opacity','0.1');
+      dl.setAttribute('stroke-width','0.5');dl.setAttribute('stroke-dasharray','3 3');
+      BGL.appendChild(dl);
+    }
+  });
+}
+function drawSingleHeader(){
+  const col=CC[curChain]?.c||'#6a8aaa';
+  const maxL=layoutChain._maxL||0;
+  const layerGapV=layoutChain._layerGapV||62;
+  const headerH=layoutChain._headerH||52;
+  const canvasW=layoutChain._canvasW||window.innerWidth;
+  const title=ns('text');
+  title.setAttribute('x',canvasW/2);title.setAttribute('y',TOP+24);
+  title.setAttribute('text-anchor','middle');title.setAttribute('font-size','11px');title.setAttribute('font-weight','700');
+  title.setAttribute('fill',col);title.setAttribute('fill-opacity','0.65');title.setAttribute('letter-spacing','0.06em');
+  title.setAttribute('pointer-events','none');title.setAttribute('font-family',"'PingFang SC','Microsoft YaHei',sans-serif");
+  title.textContent=CHAIN_NAMES[curChain]||curChain;BGL.appendChild(title);
+  for(let l=0;l<=maxL;l++){
+    const cy=TOP+headerH+l*(NH+layerGapV)+NH/2;
+    const lt=ns('text');
+    lt.setAttribute('x','14');lt.setAttribute('y',cy);
+    lt.setAttribute('dominant-baseline','central');
+    lt.setAttribute('font-size','9px');lt.setAttribute('font-weight','600');
+    lt.setAttribute('fill',col);lt.setAttribute('fill-opacity','0.35');
+    lt.setAttribute('pointer-events','none');lt.setAttribute('font-family',"'PingFang SC','Microsoft YaHei',sans-serif");
+    lt.textContent=`L${l}`;BGL.appendChild(lt);
+    if(l<maxL){
+      const divY=cy+NH/2+layerGapV/2;
+      const dl=ns('line');
+      dl.setAttribute('x1','40');dl.setAttribute('y1',divY);
+      dl.setAttribute('x2',canvasW-20);dl.setAttribute('y2',divY);
+      dl.setAttribute('stroke',col);dl.setAttribute('stroke-opacity','0.08');
+      dl.setAttribute('stroke-width','0.8');dl.setAttribute('stroke-dasharray','5 4');
+      BGL.appendChild(dl);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// render — 修复了矩形边框交点、z-order高亮、搜索联动边
+// ═══════════════════════════════════════════════════
+function render(){
+  gRoot.setAttribute('transform',`translate(${tx},${ty}) scale(${sc})`);
+  const connSet=new Set();
+  if(selId){linkData.forEach(l=>{if(l.s===selId)connSet.add(l.t);if(l.t===selId)connSet.add(l.s);});}
+  function vis(n){if(curChain==='all')return true;return n.ch===curChain||(n.also&&n.also.includes(curChain));}
+
+  // 检查搜索是否激活
+  const searchActive=document.getElementById('si').value.trim()!=='';
+
+  // 渲染 flow 连线
+  linkData.forEach(l=>{
+    const k=l.s+'_'+l.t,el=eEls[k];if(!el)return;
+    const sVis=vis(l.sn)&&(!searchActive||nEls[l.s]?.style.display!=='none');
+    const tVis=vis(l.tn)&&(!searchActive||nEls[l.t]?.style.display!=='none');
+    const visible=sVis&&tVis;
+    if(!visible){el.setAttribute('stroke-opacity','0');el.setAttribute('d','');return;}
+
+    const sx=l.sn.x, sy=l.sn.y;
+    const tx_=l.tn.x, ty_=l.tn.y;
+    const dx=tx_-sx, dy=ty_-sy, d=Math.sqrt(dx*dx+dy*dy)||1;
+    const isDownward=dy>NH*0.5;
+    let pathD;
+    if(isDownward){
+      // 使用矩形边框交点，从源节点底部中心出发
+      const p1={x:sx,y:sy+NH/2};
+      const p2={x:tx_,y:ty_-NH/2-4};
+      const cy1=p1.y+(p2.y-p1.y)*0.45;
+      const cy2=p1.y+(p2.y-p1.y)*0.55;
+      pathD=`M${p1.x},${p1.y} C${p1.x},${cy1} ${p2.x},${cy2} ${p2.x},${p2.y}`;
+    } else {
+      // 修复：用矩形边框交点而非圆形假设
+      const p1=rectEdgePoint(sx,sy,l.sn.w,NH,dx,dy);
+      const p2=rectEdgePoint(tx_,ty_,l.tn.w,NH,-dx,-dy);
+      const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+      const perp=dy/d*20; // 偏转量用于弯曲
+      pathD=`M${p1.x},${p1.y} Q${mx-dy/d*20},${my+dx/d*20} ${p2.x},${p2.y}`;
+    }
+    el.setAttribute('d',pathD);
+    const hi=selId&&(l.s===selId||l.t===selId);
+    el.setAttribute('stroke',hi?'#2cb980':CC[l.sn.ch]?.c||'#6a8aaa');
+    el.setAttribute('stroke-width',hi?2:0.7);el.setAttribute('stroke-opacity',hi?0.9:0.18);
+    el.setAttribute('marker-end',hi?'url(#arhi)':'url(#ar)');
+    // Z-order提升：高亮连线移到EL_末尾（最顶层）
+    if(hi) EL_.appendChild(el);
+  });
+
+  // 渲染替代关系连线（虚线，只在单链视图且相关节点可见时显示）
+  linkDataSub.forEach(l=>{
+    const k=l.s+'_'+l.t,el=subEls[k];if(!el)return;
+    const visible=vis(l.sn)&&vis(l.tn);
+    if(!visible){el.setAttribute('stroke-opacity','0');el.setAttribute('d','');return;}
+    const sx=l.sn.x,sy=l.sn.y,tx_=l.tn.x,ty_=l.tn.y;
+    const dx=tx_-sx,dy=ty_-sy;
+    const p1=rectEdgePoint(sx,sy,l.sn.w,NH,dx,dy);
+    const p2=rectEdgePoint(tx_,ty_,l.tn.w,NH,-dx,-dy);
+    el.setAttribute('d',`M${p1.x},${p1.y} L${p2.x},${p2.y}`);
+    el.setAttribute('stroke',CC[l.sn.ch]?.c||'#6a8aaa');
+    el.setAttribute('stroke-width','0.8');el.setAttribute('stroke-opacity','0.28');
+    el.removeAttribute('marker-end');
+  });
+
+  NODES.forEach(n=>{
+    const g=nEls[n.id];if(!g)return;
+    const visible=vis(n);
+    if(!searchActive) g.style.display=visible?'':'none';
+    else if(!visible){g.style.display='none';}
+    if(g.style.display==='none') return;
+    g.setAttribute('transform',`translate(${n.x},${n.y})`);
+    const isSel=n.id===selId,isConn=connSet.has(n.id);
+    let op=1;if(selId&&!isSel&&!isConn)op=0.15;
+    g.setAttribute('opacity',op);
+    const bd=g.querySelector('rect');const col=CC[n.ch]?.c||'#6a8aaa';
+    if(isSel){bd.setAttribute('fill',col+'35');bd.setAttribute('stroke','#2cb980');bd.setAttribute('stroke-width','2.5');bd.setAttribute('stroke-opacity','1');bd.removeAttribute('stroke-dasharray');}
+    else if(isConn&&selId){bd.setAttribute('fill',col+'28');bd.setAttribute('stroke',col);bd.setAttribute('stroke-width',n.anchor?2.2:n.fu?1.8:1.3);bd.setAttribute('stroke-opacity','1');bd.removeAttribute('stroke-dasharray');}
+    else{bd.setAttribute('fill',CC[n.ch]?.bg||'#f5f7fa');bd.setAttribute('stroke',col);const sw=n.anchor?2:n.fu?1.4:n.role==='end'?0.5:0.8;bd.setAttribute('stroke-width',sw);bd.setAttribute('stroke-opacity',n.anchor?0.95:n.fu?0.85:n.role==='end'?0.35:0.55);if(n.role==='end')bd.setAttribute('stroke-dasharray','3 2');else bd.removeAttribute('stroke-dasharray');}
+    // Z-order提升：选中节点和相连节点移到NL_末尾（最顶层）
+    if(isSel||isConn) NL_.appendChild(g);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// 节点详情面板
+// ═══════════════════════════════════════════════════
+function selNode(id){
+  if(document.getElementById('mnemo-panel').classList.contains('open')) return;
+  selId=selId===id?null:id;
+  if(selId)showPanel(nodeMap[id]);else closePanel();
+  render();
+}
+function showPanel(n){
+  document.getElementById('pn').textContent=n.lb||'';
+  const col=CC[n.ch]?.c||'#6a8aaa';
+  const pb=document.getElementById('pb');
+  const chains=[n.ch,...(n.also||[])].map(c=>CHAIN_NAMES[c]||c);
+  pb.textContent=chains.join(' · ');pb.style.background=col+'18';pb.style.color=col;pb.style.border=`1px solid ${col}40`;
+  document.getElementById('pf').style.display=n.fu?'inline-block':'none';
+  document.getElementById('pd').textContent=n.desc||'暂无说明。';
+  const pm=document.getElementById('pm');
+  if(n.mn){pm.style.display='';document.getElementById('pmt').textContent=n.mn;}else pm.style.display='none';
+  function rr(arr,el,dir){
+    el.innerHTML='';
+    arr.forEach(l=>{const peer=dir==='up'?l.sn:l.tn;const pc=CC[peer.ch]?.c||'#6a8aaa';const d=document.createElement('div');d.className='ri';d.innerHTML=`<span class="rn" style="color:${pc}">${peer.lb||''}</span><span class="rl">${l.lb||''}</span>`;d.onclick=()=>selNode(peer.id);el.appendChild(d);});
+    if(!arr.length)el.innerHTML='<div style="font-size:10px;color:#999999;padding:2px 0">无</div>';
+  }
+  rr(linkData.filter(l=>l.t===n.id),document.getElementById('pu'),'up');
+  rr(linkData.filter(l=>l.s===n.id),document.getElementById('pdn'),'dn');
+  document.getElementById('panel').style.display='block';
+}
+function closePanel(){selId=null;document.getElementById('panel').style.display='none';render();}
+
+// ═══════════════════════════════════════════════════
+// 口诀速查面板
+// ═══════════════════════════════════════════════════
+let mnemoFilter='all';
+function toggleMnemo(){
+  const p=document.getElementById('mnemo-panel');
+  const btn=document.getElementById('mnemo-btn');
+  const open=p.classList.toggle('open');
+  btn.classList.toggle('on',open);
+  if(open){buildMnemoCards(mnemoFilter);closePanel();}
+}
+function filterMnemo(f,btn){
+  mnemoFilter=f;
+  document.querySelectorAll('.mf-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  buildMnemoCards(f);
+}
+function buildMnemoCards(f){
+  const body=document.getElementById('mp-body');
+  body.innerHTML='';
+  const list=NODES.filter(n=>n.mn&&(f==='all'||n.ch===f||(n.also&&n.also.includes(f))));
+  if(!list.length){
+    body.innerHTML='<div style="font-size:13px;color:#888888;padding:40px 0;text-align:center;grid-column:1/-1">该板块暂无口诀品种</div>';
+    return;
+  }
+  list.forEach(n=>{
+    const col=CC[n.ch]?.c||'#6a8aaa';
+  const bg=CC[n.ch]?.bg||'#f5f7fa';
+    const card=document.createElement('div');
+    card.className='mc';
+    card.style.borderLeftColor=col;
+    card.style.background=bg+'dd';
+    const chainLabel=[n.ch,...(n.also||[])].map(c=>CHAIN_NAMES[c]||c).join(' · ');
+    card.innerHTML=`
+      <div class="mc-head">
+        <span class="mc-name">${n.lb}</span>
+        <span class="mc-chain" style="background:${col}22;color:${col};border:1px solid ${col}40">${chainLabel}</span>
+        ${n.fu?'<span class="mc-fu">★ 期货</span>':''}
+      </div>
+      <div class="mc-text">${n.mn}</div>
+      <div class="mc-tip">📍 点击卡片在图谱中定位</div>
+    `;
+    card.onclick=()=>{
+      toggleMnemo();
+      const tabBtn=document.querySelector(`.tab[data-c="${n.ch}"]`);
+      if(tabBtn&&curChain!==n.ch) setChain(n.ch,tabBtn);
+      setTimeout(()=>{
+        selNode(n.id);
+        // 修复：定位后居中节点到视口
+        if(nodeMap[n.id]){
+          const node=nodeMap[n.id];
+          const cw=document.getElementById('cw');
+          const vw=cw.offsetWidth, vh=cw.offsetHeight;
+          tx=vw/2-node.x*sc;
+          ty=vh/2-node.y*sc;
+          render();
+        }
+      },200);
+    };
+    body.appendChild(card);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// 产业链切换
+// ═══════════════════════════════════════════════════
+function setChain(c,btn){
+  curChain=c;selId=null;document.getElementById('panel').style.display='none';
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  // 清空搜索框并重置所有节点显示状态
+  const si=document.getElementById('si');
+  if(si.value){si.value='';NODES.forEach(n=>{const g=nEls[n.id];if(g){g.style.display='';g.style.filter='';g.removeAttribute('opacity');}});}
+  const mfBtn=document.querySelector(`.mf-btn[data-f="${c}"]`);
+  if(mfBtn){filterMnemo(c,mfBtn);}
+  tx=0;ty=0;sc=1;
+  if(c==='all')layoutAll();else layoutChain(c);
+  drawBgs();render();
+}
+
+// ═══════════════════════════════════════════════════
+// 搜索 & 重置 — 搜索时同步更新连线可见性
+// ═══════════════════════════════════════════════════
+let _st=null;
+function doSearch(v){
+  clearTimeout(_st);_st=setTimeout(()=>{
+    v=v.trim().toLowerCase();
+    if(!v){
+      NODES.forEach(n=>{const g=nEls[n.id];if(g){g.style.filter='';g.style.display='';g.removeAttribute('opacity');}});
+      render();return;
+    }
+    NODES.forEach(n=>{const g=nEls[n.id];if(!g)return;
+      const hit=(n.lb||'').toLowerCase().includes(v)||(n.sb||'').toLowerCase().includes(v)||n.id.toLowerCase().includes(v)||(n.desc||'').toLowerCase().includes(v);
+      g.style.display=hit?'':'none';g.style.filter=hit?'brightness(1.8)':'';});
+    render(); // 重新渲染以隐藏孤立连线
+  },100);
+}
+function resetAll(){
+  tx=0;ty=0;sc=1;selId=null;curChain='all';
+  document.getElementById('panel').style.display='none';document.getElementById('si').value='';
+  document.getElementById('mnemo-panel').classList.remove('open');
+  document.getElementById('mnemo-btn').classList.remove('on');
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',i===0));
+  NODES.forEach(n=>{const g=nEls[n.id];if(g){g.style.filter='';g.style.display='';g.removeAttribute('opacity');}});
+  layoutAll();drawBgs();render();
+}
+
+// ═══════════════════════════════════════════════════
+// 拖拽 & 缩放 — 支持鼠标和触屏
+// ═══════════════════════════════════════════════════
+const cw_=document.getElementById('cw');
+let drag=false,ds={x:0,y:0},do_={x:0,y:0};
+
+// 鼠标拖拽
+cw_.addEventListener('mousedown',e=>{
+  if(e.target.closest('g[style*="pointer"]'))return;
+  drag=true;ds={x:e.clientX,y:e.clientY};do_={x:tx,y:ty};
+});
+window.addEventListener('mousemove',e=>{
+  if(!drag)return;tx=do_.x+(e.clientX-ds.x);ty=do_.y+(e.clientY-ds.y);
+  gRoot.setAttribute('transform',`translate(${tx},${ty}) scale(${sc})`);
+});
+window.addEventListener('mouseup',()=>drag=false);
+
+// 触屏拖拽 & 双指缩放
+let touches={},lastDist=0;
+cw_.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  if(e.touches.length===1){
+    drag=true;ds={x:e.touches[0].clientX,y:e.touches[0].clientY};do_={x:tx,y:ty};
+  } else if(e.touches.length===2){
+    drag=false;
+    const dx=e.touches[0].clientX-e.touches[1].clientX;
+    const dy=e.touches[0].clientY-e.touches[1].clientY;
+    lastDist=Math.sqrt(dx*dx+dy*dy);
+  }
+},{passive:false});
+cw_.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(e.touches.length===1&&drag){
+    tx=do_.x+(e.touches[0].clientX-ds.x);
+    ty=do_.y+(e.touches[0].clientY-ds.y);
+    gRoot.setAttribute('transform',`translate(${tx},${ty}) scale(${sc})`);
+  } else if(e.touches.length===2){
+    const dx=e.touches[0].clientX-e.touches[1].clientX;
+    const dy=e.touches[0].clientY-e.touches[1].clientY;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(lastDist>0){
+      const d=dist/lastDist;
+      const mx=(e.touches[0].clientX+e.touches[1].clientX)/2;
+      const my=(e.touches[0].clientY+e.touches[1].clientY)/2;
+      const r=cw_.getBoundingClientRect();
+      const lx=mx-r.left,ly=my-r.top;
+      tx=lx-(lx-tx)*d;ty=ly-(ly-ty)*d;sc=Math.max(0.1,Math.min(10,sc*d));
+      gRoot.setAttribute('transform',`translate(${tx},${ty}) scale(${sc})`);
+    }
+    lastDist=dist;
+  }
+},{passive:false});
+cw_.addEventListener('touchend',e=>{
+  drag=false;lastDist=0;
+  // 单指单击触发节点选择
+  if(e.changedTouches.length===1&&e.target.closest('g[style*="pointer"]')){
+    // click事件会自动触发，无需处理
+  }
+},{passive:false});
+
+// 滚轮缩放
+cw_.addEventListener('wheel',e=>{e.preventDefault();const d=e.deltaY>0?0.88:1.13;const r=cw_.getBoundingClientRect();const mx=e.clientX-r.left,my=e.clientY-r.top;tx=mx-(mx-tx)*d;ty=my-(my-ty)*d;sc=Math.max(0.1,Math.min(10,sc*d));gRoot.setAttribute('transform',`translate(${tx},${ty}) scale(${sc})`);},{passive:false});
+
+// 点击画布背景取消选中（SVG背景）
+svgEl.addEventListener('click',e=>{
+  if(e.target===svgEl||e.target.tagName==='svg'){
+    if(selId){selId=null;closePanel();}
+  }
+});
+
+// 图例折叠
+let legOpen=true;
+function toggleLeg(){
+  legOpen=!legOpen;
+  const body=document.getElementById('leg-body');
+  const arrow=document.getElementById('leg-arrow');
+  body.style.maxHeight=legOpen?'300px':'0';
+  body.style.marginTop=legOpen?'6px':'0';
+  arrow.style.transform=legOpen?'':'rotate(180deg)';
+}
+
+// 暴露全局
+window.setChain=setChain;window.doSearch=doSearch;window.resetAll=resetAll;
+window.closePanel=closePanel;window.toggleMnemo=toggleMnemo;window.filterMnemo=filterMnemo;window.toggleLeg=toggleLeg;
+
+// 启动
+layoutAll();drawBgs();render();
+window.addEventListener('resize',()=>{if(curChain==='all')layoutAll();else layoutChain(curChain);drawBgs();render();});
+</script>
+</html>
